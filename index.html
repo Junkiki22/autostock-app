@@ -204,10 +204,11 @@ function stockBadge(item){
 }
 function render(items){
   itemsData=items;
-  const groups={urgent:[],soon:[],ok:[],paused:[]};
+  const groups={urgent:[],soon:[],ok:[],paused:[], outOfStock:[]};
   items.forEach(item=>{
     if(!item.enabled)return;
     if(item.paused){groups.paused.push({item,d:0});return;}
+    if(item.stockCurrent!=null&&item.stockCurrent<=0&&item.stockTotal!=null){groups.outOfStock.push({item});}
     const d=calcDaysLeft(item);groups[getStatus(d)].push({item,d});
   });
   document.getElementById('count-urgent').textContent=groups.urgent.length;
@@ -247,6 +248,7 @@ function cardPaused(item){
     <div class="card-actions2" style="margin-top:12px;"><button class="btn btn-secondary" style="font-size:11px;" onclick="editItem(event,'${id}')">✏️ 編集・再開</button><button class="btn btn-danger" onclick="deleteItem(event,'${id}')">🗑</button></div>
   </div>`;
 }
+function cardOutOfStock(item){var id=item.id,total=item.stockTotal;var ab=item.asin?'<button class="btn btn-amazon" onclick="openAmazon(event,\''+item.asin+'\')">\uD83D\uDED2 Amazon\u3067\u8CFC\u5165</button>':'<button class="btn btn-secondary" style="opacity:0.35" disabled>ASIN\u672A\u8A2D\u5B9A</button>';return '<div class="item-card urgent" data-id="'+id+'"><div class="card-top"><div class="card-left"><span class="card-icon">'+(item.icon||'\uD83D\uDCE6')+'</span><div class="card-info"><div class="card-name">'+item.name+'</div><div class="card-sub">'+(item.note||(item.cycleDays?item.cycleDays+'\u65E5\u3054\u3068':'\u5728\u5EAB\u7BA1\u7406'))+'</div></div></div><span class="card-badge badge-urgent">\uD83D\uDCE6 \u5728\u5EAB\u5207\u308C 0/'+total+'\u500B</span></div><div class="card-actions">'+ab+'<button class="btn btn-secondary" style="font-size:11px;" onclick="editItem(event,\''+id+'\')"">\u270F\uFE0F \u5728\u5EAB\u3092\u88DC\u5145</button></div></div>';}
 function openAmazon(e,asin){e.stopPropagation();window.open(`https://www.amazon.co.jp/dp/${asin}/`,'_blank');}
 async function markReplaced(e,id){
   e.stopPropagation();const btn=e.currentTarget;btn.disabled=true;btn.textContent='⏳ 更新中...';
