@@ -228,6 +228,7 @@ function render(items){
   document.getElementById('count-ok').textContent=groups.ok.length;
   let html='';
   if(groups.urgent.length){html+=`<div class="section"><div class="section-title"><span class="live-dot"></span> 今すぐ対応</div>`;groups.urgent.forEach(({item,d})=>html+=card(item,d,'urgent'));html+=`</div>`;}
+  if(groups.outOfStock.length){html+='<div class="section"><div class="section-title">📦 在庫切れ</div>';groups.outOfStock.forEach(function(x){html+=cardOutOfStock(x.item);});html+='</div>';}
   if(groups.soon.length){html+=`<div class="section"><div class="section-title">まもなく交換</div>`;groups.soon.forEach(({item,d})=>html+=card(item,d,'soon'));html+=`</div>`;}
   if(groups.ok.length){html+=`<div class="section"><div class="section-title">正常</div>`;groups.ok.forEach(({item,d})=>html+=card(item,d,'ok'));html+=`</div>`;}
   if(groups.paused.length){html+=`<div class="section"><div class="section-title">⏸ 一時停止中</div>`;groups.paused.forEach(({item})=>html+=cardPaused(item));html+=`</div>`;}
