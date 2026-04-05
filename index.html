@@ -327,7 +327,7 @@ async function saveItem(){
       stockCurrent:stCurrent!==''?parseInt(stCurrent):undefined,
       asin:document.getElementById('newAsin').value.trim(),
       lastReplaced:document.getElementById('newLastReplaced').value||new Date().toISOString().split('T')[0],
-      paused:document.getElementById('newPaused').checked,
+      pet:document.getElementById('newPet').checked,paused:document.getElementById('newPaused').checked,
       enabled:true
     };
     if(editId){const idx=itemsData.findIndex(i=>i.id===editId);if(idx>=0)itemsData[idx]={...itemsData[idx],...item};}
