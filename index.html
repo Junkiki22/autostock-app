@@ -213,9 +213,9 @@ function stockBadge(item){
   if(cur<=1)return `<span class="stock-badge stock-warn">⚠️ 残り${cur}/${total}個</span>`;
   return `<span class="stock-badge stock-normal">🔘 ${cur}/${total}個</span>`;
 }
-function render(items){
+function render(items, forcePetMode){
   itemsData=items;
-  const petMode=document.body.classList.contains('pet-mode');
+  const petMode = (forcePetMode !== undefined) ? forcePetMode : document.body.classList.contains('pet-mode');
   const groups={urgent:[],soon:[],ok:[],paused:[],outOfStock:[],stockOnly:[]};
   items.forEach(item=>{
     if(!item.enabled)return;
@@ -379,7 +379,7 @@ function togglePetMode() {
     btn.style.borderColor = '';
     showToast('🏠 通常モード', '');
   }
-  if(itemsData&&itemsData.length>0){render(itemsData);}else{loadItems();}
+  const isPet=document.body.classList.contains('pet-mode');if(itemsData&&itemsData.length>0){render(itemsData,isPet);}else{loadItems();}
 }
 
 function openModal(id){document.getElementById(id).classList.add('open');}
