@@ -379,7 +379,7 @@ function togglePetMode() {
     btn.style.borderColor = '';
     showToast('🏠 通常モード', '');
   }
-  loadItems();
+  if(itemsData&&itemsData.length>0){render(itemsData);}else{loadItems();}
 }
 
 function openModal(id){document.getElementById(id).classList.add('open');}
