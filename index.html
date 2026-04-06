@@ -3,392 +3,719 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>AutoStock</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>AutoStock – 消耗品自動管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#0a0a0f;--surface:#12121a;--card:#1a1a26;--border:#2a2a3e;--accent:#4fffb0;--accent2:#ff6b6b;--accent3:#ffd166;--text:#e8e8f0;--muted:#7070a0;--amazon:#ff9900;}
-  body.pet-mode{--bg:#d8d8e0;--surface:#e0e0e8;--card:#e8e8f0;--border:#c0c0cc;--accent:#7070a0;--accent2:#9090b8;--accent3:#8080a8;--text:#333350;--muted:#8080a0;--amazon:#7070a0;}
-  body.pet-mode .logo{color:#5050a0;}
-  body.pet-mode .logo span{color:#333350;}
-  body.pet-mode .btn-amazon{background:#7070a0;color:#fff;}
-  body.pet-mode .fab{background:#7070a0;box-shadow:0 8px 24px rgba(112,112,160,0.4);}
-  body.pet-mode #petBtn{background:#7070a0;border-color:#7070a0;color:#fff;}
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;min-height:100vh;display:flex;justify-content:center;overflow-x:hidden;}
-  .phone{width:100%;max-width:430px;min-height:100vh;background:var(--bg);position:relative;padding-bottom:90px;}
-  .header{padding:52px 20px 16px;background:linear-gradient(180deg,#0a0a0f 60%,transparent);position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);}
-  .header-top{display:flex;justify-content:space-between;align-items:center;}
-  .logo{font-family:'Space Mono',monospace;font-size:20px;color:var(--accent);}
-  .logo span{color:var(--text);}
-  .header-actions{display:flex;gap:8px;align-items:center;}
-  .icon-btn{width:38px;height:38px;border-radius:12px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;}
-  .summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:12px 20px 0;}
-  .sum-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;text-align:center;}
-  .sum-num{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;}
-  .sum-label{font-size:10px;color:var(--muted);margin-top:4px;}
-  .sum-card.alert .sum-num{color:var(--accent2);}
-  .sum-card.ok .sum-num{color:var(--accent);}
-  .sum-card.pending .sum-num{color:var(--accent3);}
-  .section{padding:20px 20px 0;}
-  .section-title{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-family:'Space Mono',monospace;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-  .section-title::after{content:'';flex:1;height:1px;background:var(--border);}
-  .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;}
-  .loading-text{font-size:13px;color:var(--muted);font-family:'Space Mono',monospace;}
-  .item-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden;transition:border-color 0.2s;}
-  .item-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:18px 18px 0 0;}
-  .item-card.urgent::before{background:var(--accent2);}
-  .item-card.soon::before{background:var(--accent3);}
-  .item-card.ok::before{background:var(--accent);}
-  .item-card.paused{opacity:0.5;filter:grayscale(0.6);}
-  .item-card.paused::before{background:var(--muted);}
-  .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
-  .card-left{display:flex;align-items:flex-start;flex:1;}
-  .card-icon{font-size:28px;margin-right:12px;flex-shrink:0;}
-  .card-info{flex:1;min-width:0;}
-  .card-name{font-size:15px;font-weight:700;display:flex;align-items:center;flex-wrap:wrap;gap:4px;}
-  .card-sub{font-size:11px;color:var(--muted);margin-top:2px;}
-  .card-badge{font-size:10px;font-family:'Space Mono',monospace;padding:4px 8px;border-radius:8px;font-weight:700;white-space:nowrap;}
-  .badge-urgent{background:rgba(255,107,107,0.15);color:var(--accent2);border:1px solid rgba(255,107,107,0.3);}
-  .badge-soon{background:rgba(255,209,102,0.15);color:var(--accent3);border:1px solid rgba(255,209,102,0.3);}
-  .badge-ok{background:rgba(79,255,176,0.1);color:var(--accent);border:1px solid rgba(79,255,176,0.2);}
-  .badge-paused{background:rgba(112,112,160,0.15);color:var(--muted);border:1px solid rgba(112,112,160,0.3);}
-  .stock-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-family:'Space Mono',monospace;padding:2px 6px;border-radius:5px;font-weight:700;}
-  .stock-normal{background:rgba(112,112,160,0.12);color:var(--muted);}
-  .stock-warn{background:rgba(255,209,102,0.18);color:var(--accent3);}
-  .stock-empty{background:rgba(255,107,107,0.18);color:var(--accent2);}
-  .progress-wrap{margin:12px 0 10px;}
-  .progress-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px;}
-  .progress-bar{height:5px;background:var(--border);border-radius:10px;overflow:hidden;}
-  .progress-fill{height:100%;border-radius:10px;transition:width 0.6s ease;}
-  .fill-urgent{background:var(--accent2);}
-  .fill-soon{background:var(--accent3);}
-  .fill-ok{background:var(--accent);}
-  .card-actions{display:flex;gap:8px;margin-top:10px;}
-  .card-actions2{display:flex;gap:8px;margin-top:8px;}
-  .btn{flex:1;padding:9px 12px;border-radius:10px;border:none;font-size:12px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;font-weight:500;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:5px;}
-  .btn-amazon{background:var(--amazon);color:#000;font-weight:700;}
-  .btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border);}
-  .btn-danger{background:rgba(255,107,107,0.1);color:var(--accent2);border:1px solid rgba(255,107,107,0.3);flex:0;padding:9px 14px;}
-  .btn:disabled{opacity:0.4;cursor:not-allowed;}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;animation:pulse 2s infinite;}
-  .fab{position:fixed;bottom:100px;right:calc(50% - 215px + 20px);width:52px;height:52px;border-radius:16px;background:var(--accent);color:#000;border:none;font-size:24px;cursor:pointer;box-shadow:0 8px 24px rgba(79,255,176,0.4);display:flex;align-items:center;justify-content:center;z-index:200;}
-  .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:80px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding-bottom:16px;z-index:100;}
-  .nav-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:0.4;padding:8px 16px;}
-  .nav-item.active{opacity:1;}
-  .nav-item.active .nav-icon{color:var(--accent);}
-  .nav-icon{font-size:20px;}
-  .nav-label{font-size:10px;}
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);z-index:300;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.3s;}
-  .modal-overlay.open{opacity:1;pointer-events:all;}
-  .modal{width:100%;max-width:430px;margin:0 auto;background:var(--surface);border-radius:24px 24px 0 0;border:1px solid var(--border);padding:24px 20px 40px;transform:translateY(100%);transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);max-height:90vh;overflow-y:auto;}
-  .modal-overlay.open .modal{transform:translateY(0);}
-  .modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;}
-  .modal-title{font-size:18px;font-weight:700;margin-bottom:20px;}
-  .form-group{margin-bottom:14px;}
-  .form-label{font-size:11px;color:var(--muted);margin-bottom:6px;display:block;letter-spacing:1px;text-transform:uppercase;}
-  .form-input,.form-select{width:100%;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Noto Sans JP',sans-serif;font-size:14px;outline:none;}
-  .form-input:focus,.form-select:focus{border-color:var(--accent);}
-  .form-select option{background:var(--card);}
-  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .btn-full{width:100%;padding:14px;border-radius:14px;border:none;background:var(--accent);color:#000;font-weight:700;font-size:15px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;margin-top:8px;}
-  .info-box{padding:14px;background:rgba(79,255,176,0.06);border:1px solid rgba(79,255,176,0.2);border-radius:12px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:1.7;}
-  .info-box strong{color:var(--accent);}
-  .sync-badge{font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);}
-  .sync-badge.saving{color:var(--accent3);}
-  .sync-badge.done{color:var(--accent);}
-  .checkbox-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--border);margin-top:4px;cursor:pointer;}
-  .checkbox-row input[type="checkbox"]{width:18px;height:18px;accent-color:var(--accent3);cursor:pointer;}
-  .checkbox-label{font-size:13px;color:var(--text);user-select:none;}
-  #toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a26;border:1px solid var(--border);color:var(--text);padding:12px 20px;border-radius:12px;font-size:13px;z-index:999;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;}
-  @media (max-width:430px){.fab{right:20px;}}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Noto Sans JP',sans-serif;
+  background:#0a0a1a;
+  color:#e0e0e0;
+  min-height:100vh;
+  transition: background 0.3s, color 0.3s;
+}
+/* ===== Pet Mode Theme (明るいグレー) ===== */
+body.pet-mode { background:#d8d8e0; color:#333350; }
+body.pet-mode .header { background:linear-gradient(135deg,#8888a0,#9999b0); }
+body.pet-mode .summary-bar { background:rgba(120,120,150,0.15); }
+body.pet-mode .summary-item { background:rgba(120,120,150,0.15); color:#555570; }
+body.pet-mode .card { background:#e8e8f0; border-left-color:#7070a0; }
+body.pet-mode .card .item-name { color:#333350; }
+body.pet-mode .card .meta { color:#666680; }
+body.pet-mode .section-title { color:#555570; }
+body.pet-mode .btn { background:#7070a0; }
+body.pet-mode .btn:hover { background:#606090; }
+body.pet-mode .modal-content { background:#e0e0e8; color:#333350; }
+body.pet-mode .modal-content input,
+body.pet-mode .modal-content select { background:#f0f0f5; color:#333350; border-color:#aaaacc; }
+body.pet-mode .stock-badge { background:rgba(100,100,140,0.15); color:#555570; }
+
+.header {
+  background:linear-gradient(135deg,#1a1a3e,#2d1b69);
+  padding:16px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky; top:0; z-index:100;
+}
+.header h1 { font-size:20px; font-weight:700; }
+.header-btns { display:flex; gap:8px; }
+.header-btn {
+  background:rgba(255,255,255,0.15);
+  border:none; border-radius:50%;
+  width:36px; height:36px;
+  font-size:18px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  color:#fff; transition:background 0.2s;
+}
+.header-btn:hover { background:rgba(255,255,255,0.25); }
+.header-btn.active { background:rgba(255,255,255,0.35); box-shadow:0 0 8px rgba(255,255,255,0.3); }
+body.pet-mode .header-btn { color:#fff; }
+
+.container { max-width:480px; margin:0 auto; padding:12px; }
+
+/* Summary bar */
+.summary-bar {
+  display:flex; gap:8px; margin-bottom:16px;
+  background:rgba(255,255,255,0.05);
+  border-radius:12px; padding:10px;
+}
+.summary-item {
+  flex:1; text-align:center; border-radius:8px;
+  padding:8px 4px; background:rgba(255,255,255,0.05);
+  font-size:12px; color:#888;
+}
+.summary-item .num { font-size:22px; font-weight:700; display:block; }
+.summary-item.urgent .num { color:#ff4757; }
+.summary-item.soon .num { color:#ffa502; }
+.summary-item.ok .num { color:#2ed573; }
+
+/* Sections */
+.section { margin-bottom:16px; }
+.section-title {
+  font-size:13px; font-weight:500; color:#888;
+  margin-bottom:8px; padding-left:4px;
+}
+
+/* Cards */
+.card {
+  background:#151530;
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:8px;
+  border-left:4px solid #2ed573;
+  position:relative;
+  transition: opacity 0.3s, background 0.3s;
+}
+.card.urgent { border-left-color:#ff4757; }
+.card.soon { border-left-color:#ffa502; }
+.card.ok { border-left-color:#2ed573; }
+.card.stock-only { border-left-color:#5352ed; }
+.card.out-of-stock { border-left-color:#ff4757; background:#1a0a0a; }
+body.pet-mode .card.out-of-stock { background:#f0e0e0; }
+.card.paused { opacity:0.5; border-left-color:#666; }
+
+.card-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.item-icon { font-size:24px; margin-right:8px; }
+.item-name { font-size:15px; font-weight:500; flex:1; }
+.meta { font-size:11px; color:#888; }
+
+/* Stock badge */
+.stock-badge {
+  display:inline-block;
+  font-size:11px;
+  padding:2px 8px;
+  border-radius:10px;
+  margin-left:8px;
+  background:rgba(255,255,255,0.08);
+}
+.stock-badge.warning { color:#ffa502; background:rgba(255,165,2,0.15); }
+.stock-badge.danger { color:#ff4757; background:rgba(255,71,87,0.15); }
+
+/* Progress bar */
+.progress-wrap {
+  height:6px; background:rgba(255,255,255,0.1);
+  border-radius:3px; margin:8px 0; overflow:hidden;
+}
+.progress-bar {
+  height:100%; border-radius:3px;
+  transition:width 0.5s;
+}
+.progress-bar.ok { background:#2ed573; }
+.progress-bar.soon { background:#ffa502; }
+.progress-bar.urgent { background:#ff4757; }
+
+/* Status badge */
+.status-badge {
+  display:inline-block; font-size:11px; padding:2px 8px;
+  border-radius:10px; font-weight:500;
+}
+.status-badge.urgent { background:rgba(255,71,87,0.2); color:#ff4757; }
+.status-badge.soon { background:rgba(255,165,2,0.2); color:#ffa502; }
+.status-badge.ok { background:rgba(46,213,115,0.2); color:#2ed573; }
+
+/* Buttons */
+.card-actions { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+.btn {
+  border:none; border-radius:8px; padding:7px 12px;
+  font-size:12px; cursor:pointer; font-family:inherit;
+  background:#5352ed; color:#fff; transition:background 0.2s;
+}
+.btn:hover { background:#4341d0; }
+.btn.amazon { background:#ff9900; color:#000; }
+.btn.amazon:hover { background:#e68a00; }
+.btn.replace { background:#2ed573; color:#000; }
+.btn.replace:hover { background:#26b85f; }
+.btn.edit { background:rgba(255,255,255,0.1); color:#ccc; }
+.btn.edit:hover { background:rgba(255,255,255,0.2); }
+body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
+
+/* Stock only card large number */
+.stock-large {
+  font-size:28px; font-weight:700; text-align:center;
+  padding:8px 0;
+}
+.stock-large.warning { color:#ffa502; }
+.stock-large.danger { color:#ff4757; }
+.stock-large.ok { color:#2ed573; }
+
+/* Modal */
+.modal-overlay {
+  display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+  background:rgba(0,0,0,0.7); z-index:200;
+  align-items:center; justify-content:center;
+}
+.modal-overlay.show { display:flex; }
+.modal-content {
+  background:#1a1a3e; border-radius:16px; padding:24px;
+  width:90%; max-width:400px; max-height:85vh; overflow-y:auto;
+  color:#e0e0e0;
+}
+.modal-content h2 { font-size:18px; margin-bottom:16px; }
+.modal-content label { display:block; font-size:13px; color:#aaa; margin:10px 0 4px; }
+.modal-content input, .modal-content select {
+  width:100%; padding:10px; border-radius:8px;
+  border:1px solid #333; background:#0d0d20; color:#e0e0e0;
+  font-size:14px; font-family:inherit;
+}
+.modal-content .checkbox-row {
+  display:flex; align-items:center; gap:8px;
+  margin:12px 0; font-size:14px;
+}
+.modal-content .checkbox-row input[type=checkbox] {
+  width:18px; height:18px;
+}
+.modal-btns { display:flex; gap:8px; margin-top:20px; }
+.modal-btns .btn { flex:1; padding:12px; font-size:14px; }
+.btn.cancel { background:#555; }
+.btn.cancel:hover { background:#666; }
+.btn.danger { background:#ff4757; }
+.btn.danger:hover { background:#e03e4d; }
+.error-msg { color:#ff4757; font-size:12px; margin-top:4px; display:none; }
+
+/* Settings modal */
+.settings-group { margin-bottom:12px; }
+.settings-group label { font-size:12px; color:#999; }
+
+/* Loading / Error */
+.loading { text-align:center; padding:40px; color:#888; font-size:14px; }
+.app-error { text-align:center; padding:40px; color:#ff4757; font-size:14px; }
 </style>
 </head>
 <body>
-<div class="phone">
-  <div class="header">
-    <div class="header-top">
-      <div class="logo">Auto<span>Stock</span></div>
-      <div class="header-actions">
-        <span id="syncBadge" class="sync-badge"></span>
-        <button class="icon-btn" id="petBtn" onclick="togglePetMode()" title="ペット">🐰</button>
-        <button class="icon-btn" onclick="loadItems()">🔄</button>
-        <button class="icon-btn" onclick="openSettings()">⚙️</button>
-      </div>
+
+<div class="header">
+  <h1>📦 AutoStock</h1>
+  <div class="header-btns">
+    <button class="header-btn" onclick="togglePetMode()" title="ペットモード" id="petBtn">🐰</button>
+    <button class="header-btn" onclick="loadItems()" title="更新">🔄</button>
+    <button class="header-btn" onclick="openSettings()" title="設定">⚙️</button>
+    <button class="header-btn" onclick="openAdd()" title="追加">➕</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="summary-bar">
+    <div class="summary-item urgent"><span class="num" id="sumUrgent">0</span>要交換</div>
+    <div class="summary-item soon"><span class="num" id="sumSoon">0</span>まもなく</div>
+    <div class="summary-item ok"><span class="num" id="sumOk">0</span>正常</div>
+  </div>
+  <div id="itemList"><div class="loading">⚙️ 設定からGitHub接続してください</div></div>
+</div>
+
+<!-- Edit/Add Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-content">
+    <h2 id="modalTitle">アイテム編集</h2>
+    <input type="hidden" id="editId">
+    <label>アイコン（絵文字）</label>
+    <input type="text" id="editIcon" placeholder="💧">
+    <label>名前</label>
+    <input type="text" id="editName" placeholder="浄水器フィルター">
+    <label>Amazon ASIN</label>
+    <input type="text" id="editAsin" placeholder="B07ZDBXX47">
+    <label>交換サイクル（日）※在庫のみ管理の場合は空欄</label>
+    <input type="number" id="editCycle" placeholder="60">
+    <label>最終交換日</label>
+    <input type="date" id="editLastReplaced">
+    <label>在庫総数（任意）</label>
+    <input type="number" id="editStockTotal" placeholder="3" min="0">
+    <label>現在の残数（任意）</label>
+    <input type="number" id="editStockCurrent" placeholder="2" min="0">
+    <label>メモ</label>
+    <input type="text" id="editNote" placeholder="2ヶ月に1回">
+    <div class="checkbox-row">
+      <input type="checkbox" id="editPaused">
+      <span>⏸ 一時停止する</span>
+    </div>
+    <div class="checkbox-row">
+      <input type="checkbox" id="editPet">
+      <span>🐰 ペット関連のアイテム</span>
+    </div>
+    <div class="error-msg" id="editError">交換サイクルまたは在庫総数のどちらかは入力してください。</div>
+    <div class="modal-btns">
+      <button class="btn cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn danger" id="deleteBtn" onclick="deleteItem()" style="display:none">🗑</button>
+      <button class="btn" onclick="saveItem()">保存する</button>
     </div>
   </div>
-  <div class="summary">
-    <div class="sum-card alert"><div class="sum-num" id="count-urgent">-</div><div class="sum-label">要交換</div></div>
-    <div class="sum-card pending"><div class="sum-num" id="count-soon">-</div><div class="sum-label">まもなく</div></div>
-    <div class="sum-card ok"><div class="sum-num" id="count-ok">-</div><div class="sum-label">正常</div></div>
-  </div>
-  <div id="mainContent"><div class="loading-wrap"><div class="spinner"></div><div class="loading-text">読み込み中...</div></div></div>
 </div>
-<button class="fab" onclick="openAddModal()">＋</button>
-<div class="bottom-nav">
-  <div class="nav-item active"><div class="nav-icon">🏠</div><div class="nav-label">ホーム</div></div>
-  <div class="nav-item" onclick="showToast('📦 履歴は近日公開予定','')"><div class="nav-icon">📦</div><div class="nav-label">履歴</div></div>
-  <div class="nav-item" onclick="openSettings()"><div class="nav-icon">⚙️</div><div class="nav-label">設定</div></div>
-</div>
+
+<!-- Settings Modal -->
 <div class="modal-overlay" id="settingsModal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">⚙️ GitHub 設定</div>
-    <div class="info-box"><strong>items.json</strong> をGitHubと同期します。<br>設定はブラウザに保存されます（初回のみ）。</div>
-    <div class="form-group"><label class="form-label">GitHubユーザー名</label><input class="form-input" id="cfgOwner" placeholder="例: Junkiki22"/></div>
-    <div class="form-group"><label class="form-label">リポジトリ名</label><input class="form-input" id="cfgRepo" placeholder="例: autostock"/></div>
-    <div class="form-group"><label class="form-label">Personal Access Token（repo権限）</label><input class="form-input" id="cfgToken" type="password" placeholder="ghp_xxxxxxxxxx"/></div>
-    <div class="form-group"><label class="form-label">通知タイミング（何日前から）</label><input class="form-input" id="cfgDays" type="number" value="7"/></div>
-    <button class="btn-full" onclick="saveSettings()">保存して読み込む</button>
-    <button class="btn-full" style="background:transparent;color:var(--muted);margin-top:8px;" onclick="closeModal('settingsModal')">キャンセル</button>
+  <div class="modal-content">
+    <h2>⚙️ GitHub 設定</h2>
+    <div class="settings-group">
+      <label>GitHubユーザー名</label>
+      <input type="text" id="setUser" placeholder="Junkiki22">
+    </div>
+    <div class="settings-group">
+      <label>リポジトリ名</label>
+      <input type="text" id="setRepo" placeholder="autostock">
+    </div>
+    <div class="settings-group">
+      <label>Personal Access Token</label>
+      <input type="password" id="setToken" placeholder="ghp_xxxxxxxxxx">
+    </div>
+    <div class="settings-group">
+      <label>通知タイミング（何日前）</label>
+      <input type="number" id="setNotifyDays" placeholder="7" value="7">
+    </div>
+    <div class="modal-btns">
+      <button class="btn cancel" onclick="closeSettings()">キャンセル</button>
+      <button class="btn" onclick="saveSettings()">保存して読み込む</button>
+    </div>
   </div>
 </div>
-<div class="modal-overlay" id="addModal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="addModalTitle">消耗品を追加</div>
-    <input type="hidden" id="editItemId"/>
-    <div class="form-group"><label class="form-label">名前</label><input class="form-input" id="newName" placeholder="例: 浄水器フィルター"/></div>
-    <div class="form-group"><label class="form-label">メモ（商品名など）</label><input class="form-input" id="newNote" placeholder="例: BRITA 3個セット"/></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">交換サイクル（日）</label><input class="form-input" id="newCycle" type="number" placeholder="60"/></div>
-      <div class="form-group"><label class="form-label">アイコン</label>
-        <select class="form-select" id="newIcon">
-          <option>💧</option><option>🔋</option><option>🧴</option><option>☕</option>
-          <option>💊</option><option>🌬️</option><option>🧻</option><option>🪥</option>
-          <option>🫧</option><option>🧹</option><option>💡</option><option>📦</option>
-          <option>🌿</option><option>🧽</option><option>🪣</option><option>🛁</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">在庫総数（個）</label><input class="form-input" id="newStockTotal" type="number" min="0" placeholder="例: 3（任意）"/></div>
-      <div class="form-group"><label class="form-label">現在の残数（個）</label><input class="form-input" id="newStockCurrent" type="number" min="0" placeholder="例: 2"/></div>
-    </div>
-    <div class="form-group"><label class="form-label">Amazon ASIN</label><input class="form-input" id="newAsin" placeholder="例: B07ZDBXX47"/></div>
-    <div class="form-group"><label class="form-label">最終交換日</label><input class="form-input" id="newLastReplaced" type="date"/></div>
-    <label class="checkbox-row" id="petRow">
-      <input type="checkbox" id="newPet"/>
-      <span class="checkbox-label">🐰 ペット関連のアイテム</span>
-    </label>
-    <label class="checkbox-row" id="pausedRow" style="display:none;">
-      <input type="checkbox" id="newPaused"/>
-      <span class="checkbox-label">⏸ 一時停止する（季節ものなど）</span>
-    </label>
-    <button class="btn-full" id="addSaveBtn" onclick="saveItem()">追加する</button>
-    <button class="btn-full" style="background:transparent;color:var(--muted);margin-top:8px;" onclick="closeModal('addModal')">キャンセル</button>
-  </div>
-</div>
-<div id="toast"></div>
+
 <script>
-let CONFIG={owner:localStorage.getItem('gh_owner')||'',repo:localStorage.getItem('gh_repo')||'autostock',token:localStorage.getItem('gh_token')||'',notifyDays:parseInt(localStorage.getItem('gh_notify_days')||'7')};
-let itemsData=[];let itemsSha='';
-const apiUrl=()=>`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/items.json`;
-async function ghGet(){
-  const res=await fetch(apiUrl(),{headers:{'Authorization':`token ${CONFIG.token}`,'Accept':'application/vnd.github.v3+json'}});
-  if(!res.ok)throw new Error(`GitHub API Error ${res.status}: トークンまたはリポジトリを確認してください`);
-  const data=await res.json();itemsSha=data.sha;
-  const bin=atob(data.content.replace(/\n/g,''));
-  const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
-  return JSON.parse(new TextDecoder('utf-8').decode(bytes));
+// ===== State =====
+let itemsData = [];
+let _petMode = false;
+let _fileSha = null;
+
+// ===== Settings =====
+function getSettings() {
+  try {
+    return JSON.parse(localStorage.getItem('autostock_settings') || '{}');
+  } catch(e) { return {}; }
 }
-async function ghPut(items){
-  setSyncBadge('saving');
-  const res=await fetch(apiUrl(),{method:'PUT',headers:{'Authorization':`token ${CONFIG.token}`,'Content-Type':'application/json'},
-    body:JSON.stringify({message:'AutoStock: Update items.json',content:(()=>{const str=JSON.stringify(items,null,2);const bytes=new TextEncoder().encode(str);return btoa(String.fromCharCode(...bytes));})(),sha:itemsSha})});
-  if(!res.ok)throw new Error('GitHubへの保存に失敗しました');
-  const data=await res.json();itemsSha=data.content.sha;
-  setSyncBadge('done');setTimeout(()=>setSyncBadge(''),2000);
+function openSettings() {
+  const s = getSettings();
+  document.getElementById('setUser').value = s.user || '';
+  document.getElementById('setRepo').value = s.repo || '';
+  document.getElementById('setToken').value = s.token || '';
+  document.getElementById('setNotifyDays').value = s.notifyDays || 7;
+  document.getElementById('settingsModal').classList.add('show');
 }
-function calcDaysLeft(item){const next=new Date(item.lastReplaced);next.setDate(next.getDate()+item.cycleDays);return Math.ceil((next-new Date())/86400000);}
-function getStatus(d){if(d<0)return 'urgent';if(d<=CONFIG.notifyDays)return 'soon';return 'ok';}
-function formatDate(s){if(!s)return '未設定';const d=new Date(s);return `${d.getMonth()+1}月${d.getDate()}日`;}
-function stockBadge(item){
-  if(item.stockTotal==null||item.stockTotal===''||item.stockTotal===undefined)return '';
-  const cur=item.stockCurrent??item.stockTotal;
-  const total=item.stockTotal;
-  if(cur<=0)return `<span class="stock-badge stock-empty">📦 在庫切れ</span>`;
-  if(cur<=1)return `<span class="stock-badge stock-warn">⚠️ 残り${cur}/${total}個</span>`;
-  return `<span class="stock-badge stock-normal">🔘 ${cur}/${total}個</span>`;
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('show');
 }
-function render(items,petModeArg){
-  itemsData=items;
-  var petMode=(petModeArg===true);
-  var groups={urgent:[],soon:[],ok:[],paused:[],outOfStock:[],stockOnly:[]};
-  items.forEach(function(item){
-    if(!item.enabled)return;
-    if(petMode&&!item.pet)return;
-    if(!petMode&&item.pet)return;
-    if(item.paused){groups.paused.push({item:item,d:0});return;}
-    if(item.stockCurrent!=null&&item.stockCurrent<=0&&item.stockTotal!=null){groups.outOfStock.push({item:item});}
-    if(!item.cycleDays){groups.stockOnly.push({item:item});return;}
-    var d=calcDaysLeft(item);groups[getStatus(d)].push({item:item,d:d});
-  });
-  document.getElementById('count-urgent').textContent=groups.urgent.length;
-  document.getElementById('count-soon').textContent=groups.soon.length;
-  document.getElementById('count-ok').textContent=groups.ok.length;
-  var html='';
-  if(groups.urgent.length){html+='<div class="section"><div class="section-title"><span class="live-dot"></span> 今すぐ対応</div>';groups.urgent.forEach(function(x){html+=card(x.item,x.d,'urgent');});html+='</div>';}
-  if(groups.outOfStock.length){html+='<div class="section"><div class="section-title">📦 在庫切れ</div>';groups.outOfStock.forEach(function(x){html+=cardOutOfStock(x.item);});html+='</div>';}
-  if(groups.soon.length){html+='<div class="section"><div class="section-title">まもなく交換</div>';groups.soon.forEach(function(x){html+=card(x.item,x.d,'soon');});html+='</div>';}
-  if(groups.ok.length){html+='<div class="section"><div class="section-title">正常</div>';groups.ok.forEach(function(x){html+=card(x.item,x.d,'ok');});html+='</div>';}
-  if(groups.stockOnly.length){html+='<div class="section"><div class="section-title">📦 在庫管理</div>';groups.stockOnly.forEach(function(x){html+=cardStockOnly(x.item);});html+='</div>';}
-  if(groups.paused.length){html+='<div class="section"><div class="section-title">⏸ 一時停止中</div>';groups.paused.forEach(function(x){html+=cardPaused(x.item);});html+='</div>';}
-  if(!html)html='<div class="loading-wrap"><div style="font-size:48px">🎉</div><div class="loading-text" style="color:var(--accent)">全て正常です！</div></div>';
-  document.getElementById('mainContent').innerHTML=html;
+function saveSettings() {
+  const settings = {
+    user: document.getElementById('setUser').value.trim(),
+    repo: document.getElementById('setRepo').value.trim(),
+    token: document.getElementById('setToken').value.trim(),
+    notifyDays: parseInt(document.getElementById('setNotifyDays').value) || 7
+  };
+  localStorage.setItem('autostock_settings', JSON.stringify(settings));
+  closeSettings();
+  loadItems();
 }
-function card(item,d,status){
-  const prog=Math.min(100,Math.max(1,((item.cycleDays-d)/item.cycleDays)*100));
-  const badge=status==='urgent'?`${Math.abs(d)}日超過`:`残り${d}日`;
-  const id=item.id;
-  const amazonBtn=item.asin?`<button class="btn btn-amazon" onclick="openAmazon(event,'${item.asin}')">🛒 Amazonで購入</button>`:`<button class="btn btn-secondary" style="opacity:0.35" disabled>ASIN未設定</button>`;
-  return `<div class="item-card ${status}" data-id="${id}">
-    <div class="card-top"><div class="card-left"><span class="card-icon">${item.icon||'📦'}</span>
-    <div class="card-info"><div class="card-name">${item.name}${stockBadge(item)}</div>
-    <div class="card-sub">${item.note||item.cycleDays+'日ごと'}</div></div></div>
-    <span class="card-badge badge-${status}">${badge}</span></div>
-    <div class="progress-wrap"><div class="progress-label"><span>前回: ${formatDate(item.lastReplaced)}</span><span>${item.cycleDays}日サイクル</span></div>
-    <div class="progress-bar"><div class="progress-fill fill-${status}" style="width:${prog}%"></div></div></div>
-    <div class="card-actions">${amazonBtn}<button class="btn btn-secondary" onclick="markReplaced(event,'${id}')">✅ 交換済み</button></div>
-    <div class="card-actions2"><button class="btn btn-secondary" style="font-size:11px;" onclick="editItem(event,'${id}')">✏️ 編集</button><button class="btn btn-danger" onclick="deleteItem(event,'${id}')">🗑</button></div>
-  </div>`;
-}
-function cardPaused(item){
-  const id=item.id;
-  return `<div class="item-card paused" data-id="${id}">
-    <div class="card-top"><div class="card-left"><span class="card-icon">${item.icon||'📦'}</span>
-    <div class="card-info"><div class="card-name">${item.name}${stockBadge(item)}</div>
-    <div class="card-sub">${item.note||item.cycleDays+'日ごと'}</div></div></div>
-    <span class="card-badge badge-paused">⏸ 停止中</span></div>
-    <div class="card-actions2" style="margin-top:12px;"><button class="btn btn-secondary" style="font-size:11px;" onclick="editItem(event,'${id}')">✏️ 編集・再開</button><button class="btn btn-danger" onclick="deleteItem(event,'${id}')">🗑</button></div>
-  </div>`;
-}
-function cardOutOfStock(item){var id=item.id,total=item.stockTotal;var ab=item.asin?'<button class="btn btn-amazon" onclick="openAmazon(event,\''+item.asin+'\')">\uD83D\uDED2 Amazon\u3067\u8CFC\u5165</button>':'<button class="btn btn-secondary" style="opacity:0.35" disabled>ASIN\u672A\u8A2D\u5B9A</button>';return '<div class="item-card urgent" data-id="'+id+'"><div class="card-top"><div class="card-left"><span class="card-icon">'+(item.icon||'\uD83D\uDCE6')+'</span><div class="card-info"><div class="card-name">'+item.name+'</div><div class="card-sub">'+(item.note||(item.cycleDays?item.cycleDays+'\u65E5\u3054\u3068':'\u5728\u5EAB\u7BA1\u7406'))+'</div></div></div><span class="card-badge badge-urgent">\uD83D\uDCE6 \u5728\u5EAB\u5207\u308C 0/'+total+'\u500B</span></div><div class="card-actions">'+ab+'<button class="btn btn-secondary" style="font-size:11px;" onclick="editItem(event,\''+id+'\')"">\u270F\uFE0F \u5728\u5EAB\u3092\u88DC\u5145</button></div></div>';}
-function openAmazon(e,asin){e.stopPropagation();window.open(`https://www.amazon.co.jp/dp/${asin}/`,'_blank');}
-async function markReplaced(e,id){
-  e.stopPropagation();const btn=e.currentTarget;btn.disabled=true;btn.textContent='⏳ 更新中...';
-  try{
-    const idx=itemsData.findIndex(i=>i.id===id);if(idx<0)throw new Error('Not found');
-    itemsData[idx].lastReplaced=new Date().toISOString().split('T')[0];
-    if(itemsData[idx].stockCurrent!=null&&itemsData[idx].stockCurrent>0){
-      itemsData[idx].stockCurrent=itemsData[idx].stockCurrent-1;
-    }
-    await ghPut(itemsData);render(itemsData);
-    showToast(`✅ ${itemsData[idx].name} を交換済みにしました`,'var(--accent)');
-  }catch(err){btn.disabled=false;btn.textContent='✅ 交換済み';showToast('❌ '+err.message,'var(--accent2)');}
-}
-async function deleteItem(e,id){
-  e.stopPropagation();const item=itemsData.find(i=>i.id===id);
-  if(!item||!confirm(`「${item.name}」を削除しますか？`))return;
-  try{itemsData=itemsData.filter(i=>i.id!==id);await ghPut(itemsData);render(itemsData);showToast('🗑 削除しました','');}
-  catch(err){showToast('❌ '+err.message,'var(--accent2)');}
-}
-function editItem(e,id){
-  e.stopPropagation();const item=itemsData.find(i=>i.id===id);if(!item)return;
-  document.getElementById('editItemId').value=id;
-  document.getElementById('addModalTitle').textContent='消耗品を編集';
-  document.getElementById('addSaveBtn').textContent='保存する';
-  document.getElementById('newName').value=item.name;
-  document.getElementById('newNote').value=item.note||'';
-  document.getElementById('newCycle').value=item.cycleDays;
-  document.getElementById('newIcon').value=item.icon||'📦';
-  document.getElementById('newStockTotal').value=item.stockTotal??'';
-  document.getElementById('newStockCurrent').value=item.stockCurrent??'';
-  document.getElementById('newAsin').value=item.asin||'';
-  document.getElementById('newLastReplaced').value=item.lastReplaced||'';
-  document.getElementById('newPaused').checked=!!item.paused;
-  document.getElementById('pausedRow').style.display='flex';
-  openModal('addModal');
-}
-function openAddModal(){
-  document.getElementById('editItemId').value='';
-  document.getElementById('addModalTitle').textContent='消耗品を追加';
-  document.getElementById('addSaveBtn').textContent='追加する';
-  ['newName','newNote','newAsin'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('newCycle').value='';
-  document.getElementById('newIcon').value='💧';
-  document.getElementById('newStockTotal').value='';
-  document.getElementById('newStockCurrent').value='';
-  document.getElementById('newLastReplaced').value=new Date().toISOString().split('T')[0];
-  document.getElementById('newPaused').checked=false;
-  document.getElementById('pausedRow').style.display='none';
-  openModal('addModal');
-}
-async function saveItem(){
-  const name=document.getElementById('newName').value.trim();
-  if(!name){showToast('⚠️ 名前を入力してください','var(--accent3)');return;}
-  const btn=document.getElementById('addSaveBtn');btn.disabled=true;btn.textContent='⏳ 保存中...';
-  try{
-    const editId=document.getElementById('editItemId').value;
-    const stTotal=document.getElementById('newStockTotal').value;
-    const stCurrent=document.getElementById('newStockCurrent').value;
-    const item={
-      name,note:document.getElementById('newNote').value.trim(),
-      cycleDays:document.getElementById('newCycle').value!==''?parseInt(document.getElementById('newCycle').value):null,
-      icon:document.getElementById('newIcon').value,
-      stockTotal:stTotal!==''?parseInt(stTotal):undefined,
-      stockCurrent:stCurrent!==''?parseInt(stCurrent):undefined,
-      asin:document.getElementById('newAsin').value.trim(),
-      lastReplaced:document.getElementById('newLastReplaced').value||new Date().toISOString().split('T')[0],
-      pet:document.getElementById('newPet').checked,paused:document.getElementById('newPaused').checked,
-      enabled:true
-    };
-    if(editId){const idx=itemsData.findIndex(i=>i.id===editId);if(idx>=0)itemsData[idx]={...itemsData[idx],...item};}
-    else{item.id=Date.now().toString();itemsData.push(item);}
-    await ghPut(itemsData);closeModal('addModal');render(itemsData);
-    showToast(`✅ ${name} を保存しました`,'var(--accent)');
-  }catch(err){showToast('❌ '+err.message,'var(--accent2)');}
-  finally{btn.disabled=false;btn.textContent=document.getElementById('editItemId').value?'保存する':'追加する';}
-}
-function openSettings(){
-  document.getElementById('cfgOwner').value=CONFIG.owner;
-  document.getElementById('cfgRepo').value=CONFIG.repo;
-  document.getElementById('cfgToken').value=CONFIG.token;
-  document.getElementById('cfgDays').value=CONFIG.notifyDays;
-  openModal('settingsModal');
-}
-async function saveSettings(){
-  CONFIG.owner=document.getElementById('cfgOwner').value.trim();
-  CONFIG.repo=document.getElementById('cfgRepo').value.trim();
-  CONFIG.token=document.getElementById('cfgToken').value.trim();
-  CONFIG.notifyDays=parseInt(document.getElementById('cfgDays').value)||7;
-  localStorage.setItem('gh_owner',CONFIG.owner);localStorage.setItem('gh_repo',CONFIG.repo);
-  localStorage.setItem('gh_token',CONFIG.token);localStorage.setItem('gh_notify_days',CONFIG.notifyDays);
-  closeModal('settingsModal');await loadItems();
-}
-async function loadItems(){
-  if(!CONFIG.owner||!CONFIG.token){
-    document.getElementById('mainContent').innerHTML=`<div class="loading-wrap"><div style="font-size:48px">🔑</div><div class="loading-text">GitHubの設定が必要です</div><button onclick="openSettings()" style="margin-top:16px;padding:10px 24px;background:var(--accent);color:#000;border:none;border-radius:12px;cursor:pointer;font-weight:700;">設定を開く →</button></div>`;return;
+
+// ===== Pet Mode =====
+function togglePetMode() {
+  _petMode = !_petMode;
+  document.body.classList.toggle('pet-mode', _petMode);
+  document.getElementById('petBtn').classList.toggle('active', _petMode);
+  // Re-render with existing data, no reload
+  if (itemsData && itemsData.length > 0) {
+    render(itemsData);
   }
-  document.getElementById('mainContent').innerHTML=`<div class="loading-wrap"><div class="spinner"></div><div class="loading-text">GitHubから読み込み中...</div></div>`;
-  try{const items=await ghGet();render(items);}
-  catch(err){document.getElementById('mainContent').innerHTML=`<div class="loading-wrap"><div style="font-size:48px">❌</div><div class="loading-text" style="color:var(--accent2)">読み込み失敗</div><div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center;">${err.message}</div><button onclick="openSettings()" style="margin-top:16px;padding:10px 24px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:12px;cursor:pointer;">設定を確認 →</button></div>`;}
 }
-function togglePetMode(){
-  document.body.classList.toggle('pet-mode');
-  var isPet=document.body.classList.contains('pet-mode');
-  var btn=document.getElementById('petBtn');
-  if(isPet){btn.style.background='var(--accent)';btn.style.borderColor='var(--accent)';showToast('🐰 ペットモード','');}
-  else{btn.style.background='';btn.style.borderColor='';showToast('🏠 通常モード','');}
-  if(itemsData&&itemsData.length>0){render(itemsData,isPet);}else{loadItems();}
+
+// ===== GitHub API =====
+async function ghFetch(path, options = {}) {
+  const s = getSettings();
+  if (!s.user || !s.repo || !s.token) throw new Error('GitHub設定が未入力です');
+  const url = `https://api.github.com/repos/${s.user}/${s.repo}/contents/${path}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Authorization': `token ${s.token}`,
+      'Accept': 'application/vnd.github.v3+json',
+      ...(options.headers || {})
+    }
+  });
+  if (!res.ok) throw new Error(`GitHub API Error ${res.status}`);
+  return res.json();
 }
-function openModal(id){document.getElementById(id).classList.add('open');}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-function showToast(msg,color){
-  const t=document.getElementById('toast');t.textContent=msg;t.style.borderColor=color||'var(--border)';
-  t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';
-  clearTimeout(window._tt);window._tt=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';},2800);
+
+function decodeBase64Utf8(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(bytes);
 }
-function setSyncBadge(state){
-  const b=document.getElementById('syncBadge');
-  if(state==='saving'){b.textContent='⏳ 保存中';b.className='sync-badge saving';}
-  else if(state==='done'){b.textContent='✅ 保存完了';b.className='sync-badge done';}
-  else{b.textContent='';b.className='sync-badge';}
+
+function encodeUtf8Base64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
 }
-document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
-window.onload=()=>loadItems();
+
+async function loadItems() {
+  const list = document.getElementById('itemList');
+  list.innerHTML = '<div class="loading">読み込み中...</div>';
+  try {
+    const data = await ghFetch('items.json');
+    _fileSha = data.sha;
+    const content = decodeBase64Utf8(data.content.replace(/\n/g, ''));
+    itemsData = JSON.parse(content);
+    render(itemsData);
+  } catch(e) {
+    list.innerHTML = `<div class="app-error">❌ ${e.message}<br><small>⚙️ 設定を確認してください</small></div>`;
+  }
+}
+
+async function saveToGitHub(items) {
+  const content = encodeUtf8Base64(JSON.stringify(items, null, 2));
+  const res = await ghFetch('items.json', {
+    method: 'PUT',
+    body: JSON.stringify({
+      message: 'Update items from AutoStock app',
+      content: content,
+      sha: _fileSha
+    })
+  });
+  _fileSha = res.content.sha;
+}
+
+// ===== Render =====
+function render(items) {
+  const notifyDays = getSettings().notifyDays || 7;
+  const now = new Date();
+
+  // Classify items
+  const urgent = [], soon = [], ok = [], stockOnly = [], paused = [], outOfStock = [];
+
+  items.forEach(item => {
+    // Pet mode filter
+    if (_petMode && !item.pet) return;
+    if (!_petMode && item.pet) return;
+
+    // Paused items
+    if (item.paused) { paused.push(item); return; }
+
+    // Check if out of stock (for the separate section)
+    const isOutOfStock = (item.stockTotal != null && item.stockTotal > 0 && (item.stockCurrent === 0 || item.stockCurrent == null && false));
+    const hasStock = item.stockTotal != null && item.stockTotal > 0;
+    const stockEmpty = hasStock && (item.stockCurrent === 0 || item.stockCurrent === undefined || item.stockCurrent === null);
+
+    if (stockEmpty) outOfStock.push(item);
+
+    // Stock-only items (no cycle)
+    if (!item.cycleDays) {
+      stockOnly.push(item);
+      return;
+    }
+
+    // Cycle-based classification
+    const last = new Date(item.lastReplaced);
+    const elapsed = Math.floor((now - last) / 86400000);
+    const remaining = item.cycleDays - elapsed;
+    item._elapsed = elapsed;
+    item._remaining = remaining;
+    item._progress = Math.min(elapsed / item.cycleDays, 1);
+
+    if (remaining <= 0) urgent.push(item);
+    else if (remaining <= notifyDays) soon.push(item);
+    else ok.push(item);
+  });
+
+  // Update summary (only cycle-based, non-paused, non-stock-only)
+  document.getElementById('sumUrgent').textContent = urgent.length;
+  document.getElementById('sumSoon').textContent = soon.length;
+  document.getElementById('sumOk').textContent = ok.length;
+
+  let html = '';
+
+  // 1. Urgent section
+  if (urgent.length) {
+    html += `<div class="section"><div class="section-title">🔔 今すぐ対応</div>`;
+    urgent.forEach(item => { html += cardCycle(item, 'urgent'); });
+    html += `</div>`;
+  }
+
+  // 2. Out of stock section
+  if (outOfStock.length) {
+    html += `<div class="section"><div class="section-title">📦 在庫切れ</div>`;
+    outOfStock.forEach(item => { html += cardOutOfStock(item); });
+    html += `</div>`;
+  }
+
+  // 3. Soon section
+  if (soon.length) {
+    html += `<div class="section"><div class="section-title">⚠️ まもなく交換</div>`;
+    soon.forEach(item => { html += cardCycle(item, 'soon'); });
+    html += `</div>`;
+  }
+
+  // 4. OK section
+  if (ok.length) {
+    html += `<div class="section"><div class="section-title">✅ 正常</div>`;
+    ok.forEach(item => { html += cardCycle(item, 'ok'); });
+    html += `</div>`;
+  }
+
+  // 5. Stock-only section
+  if (stockOnly.length) {
+    html += `<div class="section"><div class="section-title">📦 在庫管理</div>`;
+    stockOnly.forEach(item => { html += cardStockOnly(item); });
+    html += `</div>`;
+  }
+
+  // 6. Paused section
+  if (paused.length) {
+    html += `<div class="section"><div class="section-title">⏸ 一時停止中</div>`;
+    paused.forEach(item => { html += cardPaused(item); });
+    html += `</div>`;
+  }
+
+  if (!html) {
+    html = `<div class="loading">${_petMode ? '🐰 ペット関連のアイテムはありません' : 'アイテムがありません'}</div>`;
+  }
+
+  document.getElementById('itemList').innerHTML = html;
+}
+
+// ===== Card Renderers =====
+function stockBadgeHtml(item) {
+  if (item.stockTotal == null || item.stockTotal <= 0) return '';
+  const cur = item.stockCurrent ?? 0;
+  const total = item.stockTotal;
+  let cls = '';
+  let label = `${cur}/${total}個`;
+  if (cur === 0) { cls = 'danger'; label = `在庫切れ 0/${total}個`; }
+  else if (cur <= 1) { cls = 'warning'; label = `残り${cur}/${total}個`; }
+  return `<span class="stock-badge ${cls}">${label}</span>`;
+}
+
+function cardCycle(item, level) {
+  const remaining = item._remaining;
+  const progress = item._progress;
+  const pctWidth = Math.round(progress * 100);
+  const statusText = remaining <= 0
+    ? `${Math.abs(remaining)}日超過`
+    : `残り${remaining}日`;
+
+  return `
+    <div class="card ${level}">
+      <div class="card-top">
+        <span class="item-icon">${item.icon || '📦'}</span>
+        <span class="item-name">${item.name}${stockBadgeHtml(item)}</span>
+        <span class="status-badge ${level}">${statusText}</span>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar ${level}" style="width:${pctWidth}%"></div>
+      </div>
+      <div class="meta">${item.note || ''} · ${item.cycleDays}日サイクル</div>
+      <div class="card-actions">
+        ${item.asin ? `<button class="btn amazon" onclick="openAmazon('${item.asin}')">🛒 Amazonで購入</button>` : ''}
+        <button class="btn replace" onclick="markReplaced('${item.id}')">✅ 交換済み</button>
+        <button class="btn edit" onclick="editItem('${item.id}')">✏️</button>
+      </div>
+    </div>`;
+}
+
+function cardOutOfStock(item) {
+  return `
+    <div class="card out-of-stock">
+      <div class="card-top">
+        <span class="item-icon">${item.icon || '📦'}</span>
+        <span class="item-name">${item.name}</span>
+        <span class="stock-badge danger">📦 在庫切れ 0/${item.stockTotal}個</span>
+      </div>
+      <div class="card-actions">
+        ${item.asin ? `<button class="btn amazon" onclick="openAmazon('${item.asin}')">🛒 Amazonで購入</button>` : ''}
+        <button class="btn edit" onclick="editItem('${item.id}')">✏️ 在庫を補充</button>
+      </div>
+    </div>`;
+}
+
+function cardStockOnly(item) {
+  const cur = item.stockCurrent ?? 0;
+  const total = item.stockTotal ?? 0;
+  let numClass = 'ok';
+  if (cur === 0) numClass = 'danger';
+  else if (cur <= 1) numClass = 'warning';
+
+  return `
+    <div class="card stock-only">
+      <div class="card-top">
+        <span class="item-icon">${item.icon || '📦'}</span>
+        <span class="item-name">${item.name}</span>
+      </div>
+      <div class="stock-large ${numClass}">${cur} / ${total}個</div>
+      <div class="meta">${item.note || ''}</div>
+      <div class="card-actions">
+        ${item.asin ? `<button class="btn amazon" onclick="openAmazon('${item.asin}')">🛒 Amazonで購入</button>` : ''}
+        <button class="btn replace" onclick="useStock('${item.id}')">✅ 使用済み(-1)</button>
+        <button class="btn edit" onclick="editItem('${item.id}')">✏️</button>
+      </div>
+    </div>`;
+}
+
+function cardPaused(item) {
+  return `
+    <div class="card paused">
+      <div class="card-top">
+        <span class="item-icon">${item.icon || '📦'}</span>
+        <span class="item-name">${item.name} <span class="stock-badge">⏸ 停止中</span></span>
+      </div>
+      <div class="meta">${item.note || ''}</div>
+      <div class="card-actions">
+        <button class="btn edit" onclick="editItem('${item.id}')">✏️ 編集・再開</button>
+      </div>
+    </div>`;
+}
+
+// ===== Actions =====
+function openAmazon(asin) {
+  window.open(`https://www.amazon.co.jp/dp/${asin}/?tag=autostock-22`, '_blank');
+}
+
+async function markReplaced(id) {
+  if (!confirm('交換済みにしますか？')) return;
+  const item = itemsData.find(i => i.id === id);
+  if (!item) return;
+  item.lastReplaced = new Date().toISOString().slice(0, 10);
+  // Decrease stock if available
+  if (item.stockTotal != null && item.stockCurrent != null && item.stockCurrent > 0) {
+    item.stockCurrent--;
+  }
+  try {
+    await saveToGitHub(itemsData);
+    render(itemsData);
+  } catch(e) { alert('保存エラー: ' + e.message); }
+}
+
+async function useStock(id) {
+  const item = itemsData.find(i => i.id === id);
+  if (!item) return;
+  if ((item.stockCurrent ?? 0) <= 0) { alert('在庫が0です'); return; }
+  item.stockCurrent--;
+  try {
+    await saveToGitHub(itemsData);
+    render(itemsData);
+  } catch(e) { alert('保存エラー: ' + e.message); }
+}
+
+// ===== Edit Modal =====
+function openAdd() {
+  document.getElementById('modalTitle').textContent = '➕ アイテム追加';
+  document.getElementById('editId').value = '';
+  document.getElementById('editIcon').value = '';
+  document.getElementById('editName').value = '';
+  document.getElementById('editAsin').value = '';
+  document.getElementById('editCycle').value = '';
+  document.getElementById('editLastReplaced').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('editStockTotal').value = '';
+  document.getElementById('editStockCurrent').value = '';
+  document.getElementById('editNote').value = '';
+  document.getElementById('editPaused').checked = false;
+  document.getElementById('editPet').checked = false;
+  document.getElementById('editError').style.display = 'none';
+  document.getElementById('deleteBtn').style.display = 'none';
+  document.getElementById('editModal').classList.add('show');
+}
+
+function editItem(id) {
+  const item = itemsData.find(i => i.id === id);
+  if (!item) return;
+  document.getElementById('modalTitle').textContent = '✏️ アイテム編集';
+  document.getElementById('editId').value = item.id;
+  document.getElementById('editIcon').value = item.icon || '';
+  document.getElementById('editName').value = item.name || '';
+  document.getElementById('editAsin').value = item.asin || '';
+  document.getElementById('editCycle').value = item.cycleDays || '';
+  document.getElementById('editLastReplaced').value = item.lastReplaced || '';
+  document.getElementById('editStockTotal').value = item.stockTotal ?? '';
+  document.getElementById('editStockCurrent').value = item.stockCurrent ?? '';
+  document.getElementById('editNote').value = item.note || '';
+  document.getElementById('editPaused').checked = !!item.paused;
+  document.getElementById('editPet').checked = !!item.pet;
+  document.getElementById('editError').style.display = 'none';
+  document.getElementById('deleteBtn').style.display = 'inline-block';
+  document.getElementById('editModal').classList.add('show');
+}
+
+async function saveItem() {
+  const id = document.getElementById('editId').value;
+  const icon = document.getElementById('editIcon').value.trim();
+  const name = document.getElementById('editName').value.trim();
+  const asin = document.getElementById('editAsin').value.trim();
+  const cycleVal = document.getElementById('editCycle').value.trim();
+  const cycleDays = cycleVal ? parseInt(cycleVal) : null;
+  const lastReplaced = document.getElementById('editLastReplaced').value;
+  const stockTotalVal = document.getElementById('editStockTotal').value.trim();
+  const stockTotal = stockTotalVal ? parseInt(stockTotalVal) : null;
+  const stockCurrentVal = document.getElementById('editStockCurrent').value.trim();
+  const stockCurrent = stockCurrentVal ? parseInt(stockCurrentVal) : null;
+  const note = document.getElementById('editNote').value.trim();
+  const paused = document.getElementById('editPaused').checked;
+  const pet = document.getElementById('editPet').checked;
+
+  // Validation: at least one of cycleDays or stockTotal must be set
+  if (!cycleDays && !stockTotal) {
+    document.getElementById('editError').style.display = 'block';
+    return;
+  }
+  if (!name) { alert('名前を入力してください'); return; }
+
+  const itemData = { icon, name, asin, cycleDays, lastReplaced, stockTotal, stockCurrent, note, paused, pet };
+
+  if (id) {
+    // Update existing
+    const idx = itemsData.findIndex(i => i.id === id);
+    if (idx >= 0) {
+      itemsData[idx] = { ...itemsData[idx], ...itemData };
+    }
+  } else {
+    // Add new
+    const newId = String(Date.now());
+    itemsData.push({ id: newId, enabled: true, ...itemData });
+  }
+
+  try {
+    await saveToGitHub(itemsData);
+    closeModal();
+    render(itemsData);
+  } catch(e) { alert('保存エラー: ' + e.message); }
+}
+
+async function deleteItem() {
+  const id = document.getElementById('editId').value;
+  if (!id) return;
+  if (!confirm('本当に削除しますか？')) return;
+  itemsData = itemsData.filter(i => i.id !== id);
+  try {
+    await saveToGitHub(itemsData);
+    closeModal();
+    render(itemsData);
+  } catch(e) { alert('削除エラー: ' + e.message); }
+}
+
+function closeModal() {
+  document.getElementById('editModal').classList.remove('show');
+}
+
+// ===== Init =====
+window.addEventListener('DOMContentLoaded', () => {
+  const s = getSettings();
+  if (s.user && s.repo && s.token) loadItems();
+});
 </script>
 </body>
 </html>
