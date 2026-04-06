@@ -713,6 +713,22 @@ function closeModal() {
 
 // ===== Init =====
 window.addEventListener('DOMContentLoaded', () => {
+  // URL parameter auto-setup: ?setup=USER:REPO:TOKEN
+  const params = new URLSearchParams(location.search);
+  const setup = params.get('setup');
+  if (setup) {
+    const parts = setup.split(':');
+    if (parts.length >= 3) {
+      const settings = {
+        user: parts[0],
+        repo: parts[1],
+        token: parts.slice(2).join(':'),
+        notifyDays: 7
+      };
+      localStorage.setItem('autostock_settings', JSON.stringify(settings));
+      history.replaceState(null, '', location.pathname);
+    }
+  }
   const s = getSettings();
   if (s.user && s.repo && s.token) loadItems();
 });
