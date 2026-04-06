@@ -213,29 +213,29 @@ function stockBadge(item){
   if(cur<=1)return `<span class="stock-badge stock-warn">⚠️ 残り${cur}/${total}個</span>`;
   return `<span class="stock-badge stock-normal">🔘 ${cur}/${total}個</span>`;
 }
-function render(items, forcePetMode){
+function render(items,petModeArg){
   itemsData=items;
-  const petMode = (forcePetMode !== undefined) ? forcePetMode : document.body.classList.contains('pet-mode');
-  const groups={urgent:[],soon:[],ok:[],paused:[],outOfStock:[],stockOnly:[]};
-  items.forEach(item=>{
+  var petMode=(petModeArg===true);
+  var groups={urgent:[],soon:[],ok:[],paused:[],outOfStock:[],stockOnly:[]};
+  items.forEach(function(item){
     if(!item.enabled)return;
     if(petMode&&!item.pet)return;
     if(!petMode&&item.pet)return;
-    if(item.paused){groups.paused.push({item,d:0});return;}
-    if(item.stockCurrent!=null&&item.stockCurrent<=0&&item.stockTotal!=null){groups.outOfStock.push({item});}
-    if(!item.cycleDays){groups.stockOnly.push({item});return;}
-    const d=calcDaysLeft(item);groups[getStatus(d)].push({item,d});
+    if(item.paused){groups.paused.push({item:item,d:0});return;}
+    if(item.stockCurrent!=null&&item.stockCurrent<=0&&item.stockTotal!=null){groups.outOfStock.push({item:item});}
+    if(!item.cycleDays){groups.stockOnly.push({item:item});return;}
+    var d=calcDaysLeft(item);groups[getStatus(d)].push({item:item,d:d});
   });
   document.getElementById('count-urgent').textContent=groups.urgent.length;
   document.getElementById('count-soon').textContent=groups.soon.length;
   document.getElementById('count-ok').textContent=groups.ok.length;
-  let html='';
-  if(groups.urgent.length){html+='<div class="section"><div class="section-title"><span class="live-dot"></span> 今すぐ対応</div>';groups.urgent.forEach(({item,d})=>html+=card(item,d,'urgent'));html+='</div>';}
-  if(groups.outOfStock.length){html+='<div class="section"><div class="section-title">📦 在庫切れ</div>';groups.outOfStock.forEach(({item})=>html+=cardOutOfStock(item));html+='</div>';}
-  if(groups.soon.length){html+='<div class="section"><div class="section-title">まもなく交換</div>';groups.soon.forEach(({item,d})=>html+=card(item,d,'soon'));html+='</div>';}
-  if(groups.ok.length){html+='<div class="section"><div class="section-title">正常</div>';groups.ok.forEach(({item,d})=>html+=card(item,d,'ok'));html+='</div>';}
-  if(groups.stockOnly.length){html+='<div class="section"><div class="section-title">📦 在庫管理</div>';groups.stockOnly.forEach(({item})=>html+=cardStockOnly(item));html+='</div>';}
-  if(groups.paused.length){html+='<div class="section"><div class="section-title">⏸ 一時停止中</div>';groups.paused.forEach(({item})=>html+=cardPaused(item));html+='</div>';}
+  var html='';
+  if(groups.urgent.length){html+='<div class="section"><div class="section-title"><span class="live-dot"></span> 今すぐ対応</div>';groups.urgent.forEach(function(x){html+=card(x.item,x.d,'urgent');});html+='</div>';}
+  if(groups.outOfStock.length){html+='<div class="section"><div class="section-title">📦 在庫切れ</div>';groups.outOfStock.forEach(function(x){html+=cardOutOfStock(x.item);});html+='</div>';}
+  if(groups.soon.length){html+='<div class="section"><div class="section-title">まもなく交換</div>';groups.soon.forEach(function(x){html+=card(x.item,x.d,'soon');});html+='</div>';}
+  if(groups.ok.length){html+='<div class="section"><div class="section-title">正常</div>';groups.ok.forEach(function(x){html+=card(x.item,x.d,'ok');});html+='</div>';}
+  if(groups.stockOnly.length){html+='<div class="section"><div class="section-title">📦 在庫管理</div>';groups.stockOnly.forEach(function(x){html+=cardStockOnly(x.item);});html+='</div>';}
+  if(groups.paused.length){html+='<div class="section"><div class="section-title">⏸ 一時停止中</div>';groups.paused.forEach(function(x){html+=cardPaused(x.item);});html+='</div>';}
   if(!html)html='<div class="loading-wrap"><div style="font-size:48px">🎉</div><div class="loading-text" style="color:var(--accent)">全て正常です！</div></div>';
   document.getElementById('mainContent').innerHTML=html;
 }
@@ -366,22 +366,14 @@ async function loadItems(){
   try{const items=await ghGet();render(items);}
   catch(err){document.getElementById('mainContent').innerHTML=`<div class="loading-wrap"><div style="font-size:48px">❌</div><div class="loading-text" style="color:var(--accent2)">読み込み失敗</div><div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center;">${err.message}</div><button onclick="openSettings()" style="margin-top:16px;padding:10px 24px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:12px;cursor:pointer;">設定を確認 →</button></div>`;}
 }
-function togglePetMode() {
-  const body = document.body;
-  body.classList.toggle('pet-mode');
-  const btn = document.getElementById('petBtn');
-  if (body.classList.contains('pet-mode')) {
-    btn.style.background = 'var(--accent)';
-    btn.style.borderColor = 'var(--accent)';
-    showToast('🐰 ペットモード', '');
-  } else {
-    btn.style.background = '';
-    btn.style.borderColor = '';
-    showToast('🏠 通常モード', '');
-  }
-  const isPet=document.body.classList.contains('pet-mode');if(itemsData&&itemsData.length>0){render(itemsData,isPet);}else{loadItems();}
+function togglePetMode(){
+  document.body.classList.toggle('pet-mode');
+  var isPet=document.body.classList.contains('pet-mode');
+  var btn=document.getElementById('petBtn');
+  if(isPet){btn.style.background='var(--accent)';btn.style.borderColor='var(--accent)';showToast('🐰 ペットモード','');}
+  else{btn.style.background='';btn.style.borderColor='';showToast('🏠 通常モード','');}
+  if(itemsData&&itemsData.length>0){render(itemsData,isPet);}else{loadItems();}
 }
-
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function showToast(msg,color){
