@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>AutoStock – 消耗品自動管理</title>
+<title>AutoStock – 消耗品＆食品管理</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -29,6 +29,14 @@ body.pet-mode .modal-content { background:#e0e0e8; color:#333350; }
 body.pet-mode .modal-content input,
 body.pet-mode .modal-content select { background:#f0f0f5; color:#333350; border-color:#aaaacc; }
 body.pet-mode .stock-badge { background:rgba(100,100,140,0.15); color:#555570; }
+
+/* ===== Food Mode Theme (温かいグリーン系) ===== */
+body.food-mode { background:#0a1a10; }
+body.food-mode .header { background:linear-gradient(135deg,#14401f,#1b6934); }
+body.food-mode .card { background:#10231a; border-left-color:#2ed573; }
+body.food-mode .btn { background:#2e9d57; color:#fff; }
+body.food-mode .btn:hover { background:#26884a; }
+body.food-mode .modal-content { background:#10231a; }
 
 .header {
   background:linear-gradient(135deg,#1a1a3e,#2d1b69);
@@ -100,36 +108,24 @@ body.pet-mode .card.out-of-stock { background:#f0e0e0; }
 .item-name { font-size:15px; font-weight:500; flex:1; }
 .meta { font-size:11px; color:#888; }
 
-/* Stock badge */
+/* Badges */
 .stock-badge {
-  display:inline-block;
-  font-size:11px;
-  padding:2px 8px;
-  border-radius:10px;
-  margin-left:8px;
-  background:rgba(255,255,255,0.08);
+  display:inline-block; font-size:11px; padding:2px 8px;
+  border-radius:10px; margin-left:8px; background:rgba(255,255,255,0.08);
 }
 .stock-badge.warning { color:#ffa502; background:rgba(255,165,2,0.15); }
 .stock-badge.danger { color:#ff4757; background:rgba(255,71,87,0.15); }
+.stock-badge.ingredient { color:#2ed573; background:rgba(46,213,115,0.15); }
 
 /* Progress bar */
-.progress-wrap {
-  height:6px; background:rgba(255,255,255,0.1);
-  border-radius:3px; margin:8px 0; overflow:hidden;
-}
-.progress-bar {
-  height:100%; border-radius:3px;
-  transition:width 0.5s;
-}
+.progress-wrap { height:6px; background:rgba(255,255,255,0.1); border-radius:3px; margin:8px 0; overflow:hidden; }
+.progress-bar { height:100%; border-radius:3px; transition:width 0.5s; }
 .progress-bar.ok { background:#2ed573; }
 .progress-bar.soon { background:#ffa502; }
 .progress-bar.urgent { background:#ff4757; }
 
 /* Status badge */
-.status-badge {
-  display:inline-block; font-size:11px; padding:2px 8px;
-  border-radius:10px; font-weight:500;
-}
+.status-badge { display:inline-block; font-size:11px; padding:2px 8px; border-radius:10px; font-weight:500; }
 .status-badge.urgent { background:rgba(255,71,87,0.2); color:#ff4757; }
 .status-badge.soon { background:rgba(255,165,2,0.2); color:#ffa502; }
 .status-badge.ok { background:rgba(46,213,115,0.2); color:#2ed573; }
@@ -150,11 +146,7 @@ body.pet-mode .card.out-of-stock { background:#f0e0e0; }
 .btn.edit:hover { background:rgba(255,255,255,0.2); }
 body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
 
-/* Stock only card large number */
-.stock-large {
-  font-size:28px; font-weight:700; text-align:center;
-  padding:8px 0;
-}
+.stock-large { font-size:28px; font-weight:700; text-align:center; padding:8px 0; }
 .stock-large.warning { color:#ffa502; }
 .stock-large.danger { color:#ff4757; }
 .stock-large.ok { color:#2ed573; }
@@ -168,8 +160,7 @@ body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
 .modal-overlay.show { display:flex; }
 .modal-content {
   background:#1a1a3e; border-radius:16px; padding:24px;
-  width:90%; max-width:400px; max-height:85vh; overflow-y:auto;
-  color:#e0e0e0;
+  width:90%; max-width:400px; max-height:85vh; overflow-y:auto; color:#e0e0e0;
 }
 .modal-content h2 { font-size:18px; margin-bottom:16px; }
 .modal-content label { display:block; font-size:13px; color:#aaa; margin:10px 0 4px; }
@@ -178,13 +169,8 @@ body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
   border:1px solid #333; background:#0d0d20; color:#e0e0e0;
   font-size:14px; font-family:inherit;
 }
-.modal-content .checkbox-row {
-  display:flex; align-items:center; gap:8px;
-  margin:12px 0; font-size:14px;
-}
-.modal-content .checkbox-row input[type=checkbox] {
-  width:18px; height:18px;
-}
+.modal-content .checkbox-row { display:flex; align-items:center; gap:8px; margin:12px 0; font-size:14px; }
+.modal-content .checkbox-row input[type=checkbox] { width:18px; height:18px; }
 .modal-btns { display:flex; gap:8px; margin-top:20px; }
 .modal-btns .btn { flex:1; padding:12px; font-size:14px; }
 .btn.cancel { background:#555; }
@@ -192,12 +178,9 @@ body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
 .btn.danger { background:#ff4757; }
 .btn.danger:hover { background:#e03e4d; }
 .error-msg { color:#ff4757; font-size:12px; margin-top:4px; display:none; }
-
-/* Settings modal */
+.food-only { display:none; }
 .settings-group { margin-bottom:12px; }
 .settings-group label { font-size:12px; color:#999; }
-
-/* Loading / Error */
 .loading { text-align:center; padding:40px; color:#888; font-size:14px; }
 .app-error { text-align:center; padding:40px; color:#ff4757; font-size:14px; }
 </style>
@@ -205,19 +188,20 @@ body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
 <body>
 
 <div class="header">
-  <h1>📦 AutoStock</h1>
+  <h1 id="appTitle">📦 AutoStock</h1>
   <div class="header-btns">
+    <button class="header-btn" onclick="toggleFoodMode()" title="食品モード" id="foodBtn">🍎</button>
     <button class="header-btn" onclick="togglePetMode()" title="ペットモード" id="petBtn">🐰</button>
-    <button class="header-btn" onclick="loadItems()" title="更新">🔄</button>
+    <button class="header-btn" onclick="loadData()" title="更新">🔄</button>
     <button class="header-btn" onclick="openSettings()" title="設定">⚙️</button>
     <button class="header-btn" onclick="openAdd()" title="追加">➕</button>
   </div>
 </div>
 
 <div class="container">
-  <div class="summary-bar">
-    <div class="summary-item urgent"><span class="num" id="sumUrgent">0</span>要交換</div>
-    <div class="summary-item soon"><span class="num" id="sumSoon">0</span>まもなく</div>
+  <div class="summary-bar" id="summaryBar">
+    <div class="summary-item urgent"><span class="num" id="sumUrgent">0</span><span id="lblUrgent">要交換</span></div>
+    <div class="summary-item soon"><span class="num" id="sumSoon">0</span><span id="lblSoon">まもなく</span></div>
     <div class="summary-item ok"><span class="num" id="sumOk">0</span>正常</div>
   </div>
   <div id="itemList"><div class="loading">⚙️ 設定からGitHub接続してください</div></div>
@@ -232,27 +216,55 @@ body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
     <input type="text" id="editIcon" placeholder="💧">
     <label>名前</label>
     <input type="text" id="editName" placeholder="浄水器フィルター">
-    <label>Amazon ASIN</label>
-    <input type="text" id="editAsin" placeholder="B07ZDBXX47">
-    <label>交換サイクル（日）※在庫のみ管理の場合は空欄</label>
-    <input type="number" id="editCycle" placeholder="60">
-    <label>最終交換日</label>
-    <input type="date" id="editLastReplaced">
+
+    <!-- 消耗品モード用フィールド -->
+    <div class="item-only">
+      <label>Amazon ASIN</label>
+      <input type="text" id="editAsin" placeholder="B07ZDBXX47">
+      <label>交換サイクル（日）※在庫のみ管理の場合は空欄</label>
+      <input type="number" id="editCycle" placeholder="60">
+      <label>最終交換日</label>
+      <input type="date" id="editLastReplaced">
+    </div>
+
+    <!-- 食品モード用フィールド -->
+    <div class="food-only">
+      <label>賞味期限</label>
+      <input type="date" id="editExpiry">
+      <label>カテゴリ</label>
+      <select id="editCategory">
+        <option value="生鮮">生鮮</option>
+        <option value="冷凍">冷凍</option>
+        <option value="常温">常温</option>
+        <option value="調味料">調味料</option>
+        <option value="飲料">飲料</option>
+        <option value="菓子">菓子</option>
+      </select>
+      <label>何日前に通知（空欄=カテゴリ既定）</label>
+      <input type="number" id="editNotifyDays" placeholder="3">
+    </div>
+
     <label>在庫総数（任意）</label>
     <input type="number" id="editStockTotal" placeholder="3" min="0">
     <label>現在の残数（任意）</label>
     <input type="number" id="editStockCurrent" placeholder="2" min="0">
     <label>メモ</label>
-    <input type="text" id="editNote" placeholder="2ヶ月に1回">
+    <input type="text" id="editNote" placeholder="">
     <div class="checkbox-row">
       <input type="checkbox" id="editPaused">
       <span>⏸ 一時停止する</span>
     </div>
-    <div class="checkbox-row">
+    <!-- 消耗品モード: ペット -->
+    <div class="checkbox-row item-only">
       <input type="checkbox" id="editPet">
       <span>🐰 ペット関連のアイテム</span>
     </div>
-    <div class="error-msg" id="editError">交換サイクルまたは在庫総数のどちらかは入力してください。</div>
+    <!-- 食品モード: 料理食材 -->
+    <div class="checkbox-row food-only">
+      <input type="checkbox" id="editIngredient">
+      <span>🍳 料理に使う食材（使い切り/期限切れで買い足し連携）</span>
+    </div>
+    <div class="error-msg" id="editError"></div>
     <div class="modal-btns">
       <button class="btn cancel" onclick="closeModal()">キャンセル</button>
       <button class="btn danger" id="deleteBtn" onclick="deleteItem()" style="display:none">🗑</button>
@@ -278,7 +290,7 @@ body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
       <input type="password" id="setToken" placeholder="ghp_xxxxxxxxxx">
     </div>
     <div class="settings-group">
-      <label>通知タイミング（何日前）</label>
+      <label>消耗品の通知タイミング（何日前）</label>
       <input type="number" id="setNotifyDays" placeholder="7" value="7">
     </div>
     <div class="modal-btns">
@@ -290,15 +302,19 @@ body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
 
 <script>
 // ===== State =====
-let itemsData = [];
+let itemsData = [];   // 消耗品 items.json
+let foodsData = [];   // 食品 foods.json
 let _petMode = false;
-let _fileSha = null;
+let _foodMode = false;
+let _fileSha = null;      // items.json sha
+let _foodSha = null;      // foods.json sha
+
+const CATEGORY_DEFAULT_NOTIFY = { '生鮮':3, '冷凍':14, '常温':30, '調味料':14, '飲料':14, '菓子':7 };
 
 // ===== Settings =====
 function getSettings() {
-  try {
-    return JSON.parse(localStorage.getItem('autostock_settings') || '{}');
-  } catch(e) { return {}; }
+  try { return JSON.parse(localStorage.getItem('autostock_settings') || '{}'); }
+  catch(e) { return {}; }
 }
 function openSettings() {
   const s = getSettings();
@@ -308,9 +324,7 @@ function openSettings() {
   document.getElementById('setNotifyDays').value = s.notifyDays || 7;
   document.getElementById('settingsModal').classList.add('show');
 }
-function closeSettings() {
-  document.getElementById('settingsModal').classList.remove('show');
-}
+function closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
 function saveSettings() {
   const settings = {
     user: document.getElementById('setUser').value.trim(),
@@ -320,18 +334,43 @@ function saveSettings() {
   };
   localStorage.setItem('autostock_settings', JSON.stringify(settings));
   closeSettings();
-  loadItems();
+  loadData();
 }
 
-// ===== Pet Mode =====
-function togglePetMode() {
-  _petMode = !_petMode;
+// ===== Mode toggles =====
+// UI（テーマ/タイトル/ラベル/ボタン/モーダル項目）を現在のモードに合わせて更新
+function applyModeUI() {
+  document.body.classList.toggle('food-mode', _foodMode);
   document.body.classList.toggle('pet-mode', _petMode);
+  document.getElementById('foodBtn').classList.toggle('active', _foodMode);
   document.getElementById('petBtn').classList.toggle('active', _petMode);
-  // Re-render with existing data, no reload
-  if (itemsData && itemsData.length > 0) {
-    render(itemsData);
+  document.getElementById('appTitle').textContent = _foodMode ? '🥗 AutoStock 食品' : '📦 AutoStock';
+  document.getElementById('lblUrgent').textContent = _foodMode ? '期限切れ' : '要交換';
+  document.getElementById('lblSoon').textContent = 'まもなく';
+  document.querySelectorAll('.food-only').forEach(el => el.style.display = _foodMode ? '' : 'none');
+  document.querySelectorAll('.item-only').forEach(el => el.style.display = _foodMode ? 'none' : '');
+}
+
+// 🐰 押下: 食品モード中なら食品を抜けて直接ペットモードへ。消耗品中なら通常⇔ペットをトグル
+function togglePetMode() {
+  const wasFood = _foodMode;
+  if (_foodMode) {
+    _foodMode = false;
+    _petMode = true;      // 食品 → ペットへ直行
+  } else {
+    _petMode = !_petMode; // 通常 ⇔ ペット
   }
+  applyModeUI();
+  if (wasFood) loadData(); // 食品→消耗品はデータソースが変わるので再読込
+  else render();           // 消耗品内の切替はデータ再利用で即描画
+}
+
+// 🍎 押下: 食品モードをトグル。入るときはペットモード解除
+function toggleFoodMode() {
+  _foodMode = !_foodMode;
+  if (_foodMode) _petMode = false;
+  applyModeUI();
+  loadData(); // items.json ⇔ foods.json でデータソースが変わるので再読込
 }
 
 // ===== GitHub API =====
@@ -350,14 +389,12 @@ async function ghFetch(path, options = {}) {
   if (!res.ok) throw new Error(`GitHub API Error ${res.status}`);
   return res.json();
 }
-
 function decodeBase64Utf8(b64) {
   const bin = atob(b64);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return new TextDecoder('utf-8').decode(bytes);
 }
-
 function encodeUtf8Base64(str) {
   const bytes = new TextEncoder().encode(str);
   let bin = '';
@@ -365,372 +402,343 @@ function encodeUtf8Base64(str) {
   return btoa(bin);
 }
 
-async function loadItems() {
+// ===== Load =====
+async function loadData() {
   const list = document.getElementById('itemList');
   list.innerHTML = '<div class="loading">読み込み中...</div>';
   try {
-    const data = await ghFetch('items.json');
-    _fileSha = data.sha;
-    const content = decodeBase64Utf8(data.content.replace(/\n/g, ''));
-    itemsData = JSON.parse(content);
-    render(itemsData);
+    if (_foodMode) {
+      let data;
+      try { data = await ghFetch('foods.json'); }
+      catch(e) {
+        // foods.json 未作成なら空で開始
+        foodsData = []; _foodSha = null; render();
+        list.innerHTML = '<div class="loading">🥗 食品未登録。➕ から追加してください</div>';
+        return;
+      }
+      _foodSha = data.sha;
+      foodsData = JSON.parse(decodeBase64Utf8(data.content.replace(/\n/g, '')));
+    } else {
+      const data = await ghFetch('items.json');
+      _fileSha = data.sha;
+      itemsData = JSON.parse(decodeBase64Utf8(data.content.replace(/\n/g, '')));
+    }
+    render();
   } catch(e) {
     list.innerHTML = `<div class="app-error">❌ ${e.message}<br><small>⚙️ 設定を確認してください</small></div>`;
   }
 }
-
-async function saveToGitHub(items) {
-  const content = encodeUtf8Base64(JSON.stringify(items, null, 2));
-  const res = await ghFetch('items.json', {
-    method: 'PUT',
-    body: JSON.stringify({
-      message: 'Update items from AutoStock app',
-      content: content,
-      sha: _fileSha
-    })
-  });
+async function saveItems() {
+  const content = encodeUtf8Base64(JSON.stringify(itemsData, null, 2));
+  const res = await ghFetch('items.json', { method:'PUT', body: JSON.stringify({
+    message:'Update items from AutoStock app', content, sha:_fileSha }) });
   _fileSha = res.content.sha;
 }
+async function saveFoods() {
+  const content = encodeUtf8Base64(JSON.stringify(foodsData, null, 2));
+  const res = await ghFetch('foods.json', { method:'PUT', body: JSON.stringify({
+    message:'Update foods from AutoStock app', content, sha:_foodSha }) });
+  _foodSha = res.content.sha;
+}
 
-// ===== Render =====
-function render(items) {
+// ===== Date helper =====
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + 'T00:00:00');
+  const now = new Date(); now.setHours(0,0,0,0);
+  return Math.round((d - now) / 86400000);
+}
+
+// ===== Render dispatcher =====
+function render() { _foodMode ? renderFoods() : renderItems(); }
+
+// ========== 消耗品 render（既存ロジック） ==========
+function renderItems() {
   const notifyDays = getSettings().notifyDays || 7;
   const now = new Date();
+  const urgent=[], soon=[], ok=[], stockOnly=[], paused=[], outOfStock=[];
 
-  // Classify items
-  const urgent = [], soon = [], ok = [], stockOnly = [], paused = [], outOfStock = [];
-
-  items.forEach(item => {
-    // Pet mode filter
+  itemsData.forEach(item => {
     if (_petMode && !item.pet) return;
     if (!_petMode && item.pet) return;
-
-    // Paused items
     if (item.paused) { paused.push(item); return; }
-
-    // Check if out of stock (for the separate section)
-    const isOutOfStock = (item.stockTotal != null && item.stockTotal > 0 && (item.stockCurrent === 0 || item.stockCurrent == null && false));
     const hasStock = item.stockTotal != null && item.stockTotal > 0;
-    const stockEmpty = hasStock && (item.stockCurrent === 0 || item.stockCurrent === undefined || item.stockCurrent === null);
-
+    const stockEmpty = hasStock && (item.stockCurrent === 0 || item.stockCurrent == null);
     if (stockEmpty) outOfStock.push(item);
-
-    // Stock-only items (no cycle)
-    if (!item.cycleDays) {
-      stockOnly.push(item);
-      return;
-    }
-
-    // Cycle-based classification
+    if (!item.cycleDays) { stockOnly.push(item); return; }
     const last = new Date(item.lastReplaced);
     const elapsed = Math.floor((now - last) / 86400000);
     const remaining = item.cycleDays - elapsed;
-    item._elapsed = elapsed;
     item._remaining = remaining;
     item._progress = Math.min(elapsed / item.cycleDays, 1);
-
     if (remaining <= 0) urgent.push(item);
     else if (remaining <= notifyDays) soon.push(item);
     else ok.push(item);
   });
 
-  // Update summary (only cycle-based, non-paused, non-stock-only)
   document.getElementById('sumUrgent').textContent = urgent.length;
   document.getElementById('sumSoon').textContent = soon.length;
   document.getElementById('sumOk').textContent = ok.length;
 
   let html = '';
-
-  // 1. Urgent section
-  if (urgent.length) {
-    html += `<div class="section"><div class="section-title">🔔 今すぐ対応</div>`;
-    urgent.forEach(item => { html += cardCycle(item, 'urgent'); });
-    html += `</div>`;
-  }
-
-  // 2. Out of stock section
-  if (outOfStock.length) {
-    html += `<div class="section"><div class="section-title">📦 在庫切れ</div>`;
-    outOfStock.forEach(item => { html += cardOutOfStock(item); });
-    html += `</div>`;
-  }
-
-  // 3. Soon section
-  if (soon.length) {
-    html += `<div class="section"><div class="section-title">⚠️ まもなく交換</div>`;
-    soon.forEach(item => { html += cardCycle(item, 'soon'); });
-    html += `</div>`;
-  }
-
-  // 4. OK section
-  if (ok.length) {
-    html += `<div class="section"><div class="section-title">✅ 正常</div>`;
-    ok.forEach(item => { html += cardCycle(item, 'ok'); });
-    html += `</div>`;
-  }
-
-  // 5. Stock-only section
-  if (stockOnly.length) {
-    html += `<div class="section"><div class="section-title">📦 在庫管理</div>`;
-    stockOnly.forEach(item => { html += cardStockOnly(item); });
-    html += `</div>`;
-  }
-
-  // 6. Paused section
-  if (paused.length) {
-    html += `<div class="section"><div class="section-title">⏸ 一時停止中</div>`;
-    paused.forEach(item => { html += cardPaused(item); });
-    html += `</div>`;
-  }
-
-  if (!html) {
-    html = `<div class="loading">${_petMode ? '🐰 ペット関連のアイテムはありません' : 'アイテムがありません'}</div>`;
-  }
-
+  if (urgent.length) { html += sec('🔔 今すぐ対応', urgent.map(i=>cardCycle(i,'urgent')).join('')); }
+  if (outOfStock.length) { html += sec('📦 在庫切れ', outOfStock.map(cardOutOfStock).join('')); }
+  if (soon.length) { html += sec('⚠️ まもなく交換', soon.map(i=>cardCycle(i,'soon')).join('')); }
+  if (ok.length) { html += sec('✅ 正常', ok.map(i=>cardCycle(i,'ok')).join('')); }
+  if (stockOnly.length) { html += sec('📦 在庫管理', stockOnly.map(cardStockOnly).join('')); }
+  if (paused.length) { html += sec('⏸ 一時停止中', paused.map(cardPaused).join('')); }
+  if (!html) html = `<div class="loading">${_petMode ? '🐰 ペット関連のアイテムはありません' : 'アイテムがありません'}</div>`;
   document.getElementById('itemList').innerHTML = html;
 }
 
-// ===== Card Renderers =====
+// ========== 食品 render（賞味期限ベース） ==========
+function renderFoods() {
+  const expired=[], soon=[], ok=[], paused=[];
+  foodsData.forEach(f => {
+    if (f.paused) { paused.push(f); return; }
+    const dLeft = daysUntil(f.expiryDate);
+    f._daysLeft = dLeft;
+    const threshold = (typeof f.notifyDaysBefore === 'number')
+      ? f.notifyDaysBefore : (CATEGORY_DEFAULT_NOTIFY[f.category] || 3);
+    if (dLeft == null) { ok.push(f); return; }
+    if (dLeft < 0) expired.push(f);
+    else if (dLeft <= threshold) soon.push(f);
+    else ok.push(f);
+  });
+  expired.sort((a,b)=>a._daysLeft-b._daysLeft);
+  soon.sort((a,b)=>a._daysLeft-b._daysLeft);
+  ok.sort((a,b)=>(a._daysLeft??9999)-(b._daysLeft??9999));
+
+  document.getElementById('sumUrgent').textContent = expired.length;
+  document.getElementById('sumSoon').textContent = soon.length;
+  document.getElementById('sumOk').textContent = ok.length;
+
+  let html = '';
+  if (expired.length) html += sec('⚠️ 期限切れ', expired.map(f=>cardFood(f,'urgent')).join(''));
+  if (soon.length)    html += sec('🔔 早めに消費', soon.map(f=>cardFood(f,'soon')).join(''));
+  if (ok.length)      html += sec('✅ 余裕あり', ok.map(f=>cardFood(f,'ok')).join(''));
+  if (paused.length)  html += sec('⏸ 一時停止中', paused.map(f=>cardFood(f,'ok')).join(''));
+  if (!html) html = '<div class="loading">🥗 食品が登録されていません（➕ で追加）</div>';
+  document.getElementById('itemList').innerHTML = html;
+}
+
+// ===== helpers =====
+function sec(title, inner) { return `<div class="section"><div class="section-title">${title}</div>${inner}</div>`; }
 function stockBadgeHtml(item) {
   if (item.stockTotal == null || item.stockTotal <= 0) return '';
-  const cur = item.stockCurrent ?? 0;
-  const total = item.stockTotal;
-  let cls = '';
-  let label = `${cur}/${total}個`;
-  if (cur === 0) { cls = 'danger'; label = `在庫切れ 0/${total}個`; }
-  else if (cur <= 1) { cls = 'warning'; label = `残り${cur}/${total}個`; }
+  const cur = item.stockCurrent ?? 0, total = item.stockTotal;
+  let cls='', label=`${cur}/${total}個`;
+  if (cur === 0) { cls='danger'; label=`在庫切れ 0/${total}個`; }
+  else if (cur <= 1) { cls='warning'; label=`残り${cur}/${total}個`; }
   return `<span class="stock-badge ${cls}">${label}</span>`;
 }
 
+// ===== 消耗品カード（既存） =====
 function cardCycle(item, level) {
   const remaining = item._remaining;
-  const progress = item._progress;
-  const pctWidth = Math.round(progress * 100);
-  const statusText = remaining <= 0
-    ? `${Math.abs(remaining)}日超過`
-    : `残り${remaining}日`;
-
-  return `
-    <div class="card ${level}">
-      <div class="card-top">
-        <span class="item-icon">${item.icon || '📦'}</span>
-        <span class="item-name">${item.name}${stockBadgeHtml(item)}</span>
-        <span class="status-badge ${level}">${statusText}</span>
-      </div>
-      <div class="progress-wrap">
-        <div class="progress-bar ${level}" style="width:${pctWidth}%"></div>
-      </div>
-      <div class="meta">${item.note || ''} · ${item.cycleDays}日サイクル</div>
-      <div class="card-actions">
-        ${item.asin ? `<button class="btn amazon" onclick="openAmazon('${item.asin}')">🛒 Amazonで購入</button>` : ''}
-        <button class="btn replace" onclick="markReplaced('${item.id}')">✅ 交換済み</button>
-        <button class="btn edit" onclick="editItem('${item.id}')">✏️</button>
-      </div>
-    </div>`;
+  const pctWidth = Math.round(item._progress * 100);
+  const statusText = remaining <= 0 ? `${Math.abs(remaining)}日超過` : `残り${remaining}日`;
+  return `<div class="card ${level}">
+    <div class="card-top"><span class="item-icon">${item.icon||'📦'}</span>
+    <span class="item-name">${item.name}${stockBadgeHtml(item)}</span>
+    <span class="status-badge ${level}">${statusText}</span></div>
+    <div class="progress-wrap"><div class="progress-bar ${level}" style="width:${pctWidth}%"></div></div>
+    <div class="meta">${item.note||''} · ${item.cycleDays}日サイクル</div>
+    <div class="card-actions">
+      ${item.asin?`<button class="btn amazon" onclick="openAmazon('${item.asin}')">🛒 Amazonで購入</button>`:''}
+      <button class="btn replace" onclick="markReplaced('${item.id}')">✅ 交換済み</button>
+      <button class="btn edit" onclick="editItem('${item.id}')">✏️</button>
+    </div></div>`;
 }
-
 function cardOutOfStock(item) {
-  return `
-    <div class="card out-of-stock">
-      <div class="card-top">
-        <span class="item-icon">${item.icon || '📦'}</span>
-        <span class="item-name">${item.name}</span>
-        <span class="stock-badge danger">📦 在庫切れ 0/${item.stockTotal}個</span>
-      </div>
-      <div class="card-actions">
-        ${item.asin ? `<button class="btn amazon" onclick="openAmazon('${item.asin}')">🛒 Amazonで購入</button>` : ''}
-        <button class="btn edit" onclick="editItem('${item.id}')">✏️ 在庫を補充</button>
-      </div>
-    </div>`;
+  return `<div class="card out-of-stock"><div class="card-top">
+    <span class="item-icon">${item.icon||'📦'}</span><span class="item-name">${item.name}</span>
+    <span class="stock-badge danger">📦 在庫切れ 0/${item.stockTotal}個</span></div>
+    <div class="card-actions">
+    ${item.asin?`<button class="btn amazon" onclick="openAmazon('${item.asin}')">🛒 Amazonで購入</button>`:''}
+    <button class="btn edit" onclick="editItem('${item.id}')">✏️ 在庫を補充</button></div></div>`;
 }
-
 function cardStockOnly(item) {
-  const cur = item.stockCurrent ?? 0;
-  const total = item.stockTotal ?? 0;
-  let numClass = 'ok';
-  if (cur === 0) numClass = 'danger';
-  else if (cur <= 1) numClass = 'warning';
-
-  return `
-    <div class="card stock-only">
-      <div class="card-top">
-        <span class="item-icon">${item.icon || '📦'}</span>
-        <span class="item-name">${item.name}</span>
-      </div>
-      <div class="stock-large ${numClass}">${cur} / ${total}個</div>
-      <div class="meta">${item.note || ''}</div>
-      <div class="card-actions">
-        ${item.asin ? `<button class="btn amazon" onclick="openAmazon('${item.asin}')">🛒 Amazonで購入</button>` : ''}
-        <button class="btn replace" onclick="useStock('${item.id}')">✅ 使用済み(-1)</button>
-        <button class="btn edit" onclick="editItem('${item.id}')">✏️</button>
-      </div>
-    </div>`;
+  const cur = item.stockCurrent ?? 0, total = item.stockTotal ?? 0;
+  let numClass = cur===0?'danger':(cur<=1?'warning':'ok');
+  return `<div class="card stock-only"><div class="card-top">
+    <span class="item-icon">${item.icon||'📦'}</span><span class="item-name">${item.name}</span></div>
+    <div class="stock-large ${numClass}">${cur} / ${total}個</div><div class="meta">${item.note||''}</div>
+    <div class="card-actions">
+    ${item.asin?`<button class="btn amazon" onclick="openAmazon('${item.asin}')">🛒 Amazonで購入</button>`:''}
+    <button class="btn replace" onclick="useStock('${item.id}')">✅ 使用済み(-1)</button>
+    <button class="btn edit" onclick="editItem('${item.id}')">✏️</button></div></div>`;
+}
+function cardPaused(item) {
+  return `<div class="card paused"><div class="card-top">
+    <span class="item-icon">${item.icon||'📦'}</span>
+    <span class="item-name">${item.name} <span class="stock-badge">⏸ 停止中</span></span></div>
+    <div class="meta">${item.note||''}</div>
+    <div class="card-actions"><button class="btn edit" onclick="editItem('${item.id}')">✏️ 編集・再開</button></div></div>`;
 }
 
-function cardPaused(item) {
-  return `
-    <div class="card paused">
-      <div class="card-top">
-        <span class="item-icon">${item.icon || '📦'}</span>
-        <span class="item-name">${item.name} <span class="stock-badge">⏸ 停止中</span></span>
-      </div>
-      <div class="meta">${item.note || ''}</div>
-      <div class="card-actions">
-        <button class="btn edit" onclick="editItem('${item.id}')">✏️ 編集・再開</button>
-      </div>
-    </div>`;
+// ===== 食品カード =====
+function cardFood(f, level) {
+  const d = f._daysLeft;
+  let statusText;
+  if (d == null) statusText = '期限未設定';
+  else if (d < 0) statusText = `${Math.abs(d)}日超過`;
+  else if (d === 0) statusText = '今日まで';
+  else statusText = `あと${d}日`;
+  const ing = f.isIngredient ? `<span class="stock-badge ingredient">🍳食材</span>` : '';
+  return `<div class="card ${level}">
+    <div class="card-top"><span class="item-icon">${f.icon||'🍽'}</span>
+    <span class="item-name">${f.name}${ing}${stockBadgeHtml(f)}</span>
+    <span class="status-badge ${level}">${statusText}</span></div>
+    <div class="meta">${f.category||''}${f.expiryDate?` · 期限 ${f.expiryDate}`:''}${f.note?` · ${f.note}`:''}</div>
+    <div class="card-actions">
+      <button class="btn replace" onclick="consumeFood('${f.id}')">✅ 食べた/使った</button>
+      <button class="btn edit" onclick="editItem('${f.id}')">✏️</button>
+    </div></div>`;
 }
 
 // ===== Actions =====
-function openAmazon(asin) {
-  window.open(`https://www.amazon.co.jp/dp/${asin}/?tag=autostock-22`, '_blank');
-}
+function openAmazon(asin) { window.open(`https://www.amazon.co.jp/dp/${asin}/?tag=autostock-22`, '_blank'); }
 
 async function markReplaced(id) {
   if (!confirm('交換済みにしますか？')) return;
-  const item = itemsData.find(i => i.id === id);
-  if (!item) return;
-  item.lastReplaced = new Date().toISOString().slice(0, 10);
-  // Decrease stock if available
-  if (item.stockTotal != null && item.stockCurrent != null && item.stockCurrent > 0) {
-    item.stockCurrent--;
+  const item = itemsData.find(i=>i.id===id); if(!item) return;
+  item.lastReplaced = new Date().toISOString().slice(0,10);
+  if (item.stockTotal!=null && item.stockCurrent!=null && item.stockCurrent>0) item.stockCurrent--;
+  try { await saveItems(); render(); } catch(e){ alert('保存エラー: '+e.message); }
+}
+async function useStock(id) {
+  const item = itemsData.find(i=>i.id===id); if(!item) return;
+  if ((item.stockCurrent??0)<=0){ alert('在庫が0です'); return; }
+  item.stockCurrent--;
+  try { await saveItems(); render(); } catch(e){ alert('保存エラー: '+e.message); }
+}
+// 食品を消費: 残数を減らし、0になったら（食材なら）買い足しは同期GAS側が拾う。0在庫の食材はここで注意喚起
+async function consumeFood(id) {
+  const f = foodsData.find(x=>x.id===id); if(!f) return;
+  if (f.stockTotal!=null && f.stockCurrent!=null && f.stockCurrent>0) {
+    f.stockCurrent--;
+  } else {
+    if (!confirm('この食品を消費（リストから削除）しますか？')) return;
+    foodsData = foodsData.filter(x=>x.id!==id);
   }
   try {
-    await saveToGitHub(itemsData);
-    render(itemsData);
-  } catch(e) { alert('保存エラー: ' + e.message); }
-}
-
-async function useStock(id) {
-  const item = itemsData.find(i => i.id === id);
-  if (!item) return;
-  if ((item.stockCurrent ?? 0) <= 0) { alert('在庫が0です'); return; }
-  item.stockCurrent--;
-  try {
-    await saveToGitHub(itemsData);
-    render(itemsData);
-  } catch(e) { alert('保存エラー: ' + e.message); }
+    await saveFoods(); render();
+    if (f.isIngredient && (f.stockCurrent===0 || !foodsData.find(x=>x.id===id))) {
+      alert('🛒 料理食材の使い切りとして、次回同期で買い足しリストに追加されます');
+    }
+  } catch(e){ alert('保存エラー: '+e.message); }
 }
 
 // ===== Edit Modal =====
 function openAdd() {
-  document.getElementById('modalTitle').textContent = '➕ アイテム追加';
+  document.getElementById('modalTitle').textContent = _foodMode ? '➕ 食品追加' : '➕ アイテム追加';
   document.getElementById('editId').value = '';
-  document.getElementById('editIcon').value = '';
-  document.getElementById('editName').value = '';
-  document.getElementById('editAsin').value = '';
-  document.getElementById('editCycle').value = '';
-  document.getElementById('editLastReplaced').value = new Date().toISOString().slice(0, 10);
-  document.getElementById('editStockTotal').value = '';
-  document.getElementById('editStockCurrent').value = '';
-  document.getElementById('editNote').value = '';
+  ['editIcon','editName','editAsin','editCycle','editStockTotal','editStockCurrent','editNote','editNotifyDays'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('editLastReplaced').value = new Date().toISOString().slice(0,10);
+  document.getElementById('editExpiry').value = '';
+  document.getElementById('editCategory').value = '生鮮';
   document.getElementById('editPaused').checked = false;
-  document.getElementById('editPet').checked = false;
-  document.getElementById('editError').style.display = 'none';
-  document.getElementById('deleteBtn').style.display = 'none';
+  document.getElementById('editPet').checked = _petMode; // ペットモード中の追加はペット扱い
+  document.getElementById('editIngredient').checked = false;
+  document.getElementById('editError').style.display='none';
+  document.getElementById('deleteBtn').style.display='none';
   document.getElementById('editModal').classList.add('show');
 }
-
 function editItem(id) {
-  const item = itemsData.find(i => i.id === id);
-  if (!item) return;
-  document.getElementById('modalTitle').textContent = '✏️ アイテム編集';
+  const src = _foodMode ? foodsData : itemsData;
+  const item = src.find(i=>i.id===id); if(!item) return;
+  document.getElementById('modalTitle').textContent = _foodMode ? '✏️ 食品編集' : '✏️ アイテム編集';
   document.getElementById('editId').value = item.id;
-  document.getElementById('editIcon').value = item.icon || '';
-  document.getElementById('editName').value = item.name || '';
-  document.getElementById('editAsin').value = item.asin || '';
-  document.getElementById('editCycle').value = item.cycleDays || '';
-  document.getElementById('editLastReplaced').value = item.lastReplaced || '';
+  document.getElementById('editIcon').value = item.icon||'';
+  document.getElementById('editName').value = item.name||'';
   document.getElementById('editStockTotal').value = item.stockTotal ?? '';
   document.getElementById('editStockCurrent').value = item.stockCurrent ?? '';
-  document.getElementById('editNote').value = item.note || '';
+  document.getElementById('editNote').value = item.note||'';
   document.getElementById('editPaused').checked = !!item.paused;
-  document.getElementById('editPet').checked = !!item.pet;
-  document.getElementById('editError').style.display = 'none';
-  document.getElementById('deleteBtn').style.display = 'inline-block';
+  if (_foodMode) {
+    document.getElementById('editExpiry').value = item.expiryDate||'';
+    document.getElementById('editCategory').value = item.category||'生鮮';
+    document.getElementById('editNotifyDays').value = item.notifyDaysBefore ?? '';
+    document.getElementById('editIngredient').checked = !!item.isIngredient;
+  } else {
+    document.getElementById('editAsin').value = item.asin||'';
+    document.getElementById('editCycle').value = item.cycleDays||'';
+    document.getElementById('editLastReplaced').value = item.lastReplaced||'';
+    document.getElementById('editPet').checked = !!item.pet;
+  }
+  document.getElementById('editError').style.display='none';
+  document.getElementById('deleteBtn').style.display='inline-block';
   document.getElementById('editModal').classList.add('show');
 }
-
 async function saveItem() {
   const id = document.getElementById('editId').value;
   const icon = document.getElementById('editIcon').value.trim();
   const name = document.getElementById('editName').value.trim();
-  const asin = document.getElementById('editAsin').value.trim();
-  const cycleVal = document.getElementById('editCycle').value.trim();
-  const cycleDays = cycleVal ? parseInt(cycleVal) : null;
-  const lastReplaced = document.getElementById('editLastReplaced').value;
   const stockTotalVal = document.getElementById('editStockTotal').value.trim();
   const stockTotal = stockTotalVal ? parseInt(stockTotalVal) : null;
   const stockCurrentVal = document.getElementById('editStockCurrent').value.trim();
   const stockCurrent = stockCurrentVal ? parseInt(stockCurrentVal) : null;
   const note = document.getElementById('editNote').value.trim();
   const paused = document.getElementById('editPaused').checked;
-  const pet = document.getElementById('editPet').checked;
+  const err = document.getElementById('editError');
+  if (!name) { err.textContent='名前を入力してください'; err.style.display='block'; return; }
 
-  // Validation: at least one of cycleDays or stockTotal must be set
-  if (!cycleDays && !stockTotal) {
-    document.getElementById('editError').style.display = 'block';
-    return;
-  }
-  if (!name) { alert('名前を入力してください'); return; }
-
-  const itemData = { icon, name, asin, cycleDays, lastReplaced, stockTotal, stockCurrent, note, paused, pet };
-
-  if (id) {
-    // Update existing
-    const idx = itemsData.findIndex(i => i.id === id);
-    if (idx >= 0) {
-      itemsData[idx] = { ...itemsData[idx], ...itemData };
+  if (_foodMode) {
+    const expiryDate = document.getElementById('editExpiry').value;
+    const category = document.getElementById('editCategory').value;
+    const ndVal = document.getElementById('editNotifyDays').value.trim();
+    const notifyDaysBefore = ndVal ? parseInt(ndVal) : (CATEGORY_DEFAULT_NOTIFY[category] || 3);
+    const isIngredient = document.getElementById('editIngredient').checked;
+    if (!expiryDate) { err.textContent='賞味期限を入力してください'; err.style.display='block'; return; }
+    const data = { icon, name, category, expiryDate, notifyDaysBefore, isIngredient, restockRef:'', asin:'', stockTotal, stockCurrent, note, paused };
+    if (id) {
+      const idx = foodsData.findIndex(i=>i.id===id);
+      if (idx>=0) foodsData[idx] = { ...foodsData[idx], ...data };
+    } else {
+      foodsData.push({ id:String(Date.now()), enabled:true, addedDate:new Date().toISOString().slice(0,10), taskId:'', ...data });
     }
+    try { await saveFoods(); closeModal(); render(); } catch(e){ alert('保存エラー: '+e.message); }
   } else {
-    // Add new
-    const newId = String(Date.now());
-    itemsData.push({ id: newId, enabled: true, ...itemData });
+    const asin = document.getElementById('editAsin').value.trim();
+    const cycleVal = document.getElementById('editCycle').value.trim();
+    const cycleDays = cycleVal ? parseInt(cycleVal) : null;
+    const lastReplaced = document.getElementById('editLastReplaced').value;
+    const pet = document.getElementById('editPet').checked;
+    if (!cycleDays && !stockTotal) { err.textContent='交換サイクルまたは在庫総数のどちらかは入力してください。'; err.style.display='block'; return; }
+    const data = { icon, name, asin, cycleDays, lastReplaced, stockTotal, stockCurrent, note, paused, pet };
+    if (id) {
+      const idx = itemsData.findIndex(i=>i.id===id);
+      if (idx>=0) itemsData[idx] = { ...itemsData[idx], ...data };
+    } else {
+      itemsData.push({ id:String(Date.now()), enabled:true, ...data });
+    }
+    try { await saveItems(); closeModal(); render(); } catch(e){ alert('保存エラー: '+e.message); }
   }
-
-  try {
-    await saveToGitHub(itemsData);
-    closeModal();
-    render(itemsData);
-  } catch(e) { alert('保存エラー: ' + e.message); }
 }
-
 async function deleteItem() {
-  const id = document.getElementById('editId').value;
-  if (!id) return;
+  const id = document.getElementById('editId').value; if(!id) return;
   if (!confirm('本当に削除しますか？')) return;
-  itemsData = itemsData.filter(i => i.id !== id);
-  try {
-    await saveToGitHub(itemsData);
-    closeModal();
-    render(itemsData);
-  } catch(e) { alert('削除エラー: ' + e.message); }
+  if (_foodMode) { foodsData = foodsData.filter(i=>i.id!==id); try{ await saveFoods(); }catch(e){ alert('削除エラー: '+e.message); return;} }
+  else { itemsData = itemsData.filter(i=>i.id!==id); try{ await saveItems(); }catch(e){ alert('削除エラー: '+e.message); return;} }
+  closeModal(); render();
 }
-
-function closeModal() {
-  document.getElementById('editModal').classList.remove('show');
-}
+function closeModal() { document.getElementById('editModal').classList.remove('show'); }
 
 // ===== Init =====
 window.addEventListener('DOMContentLoaded', () => {
-  // URL parameter auto-setup: ?setup=USER:REPO:TOKEN
   const params = new URLSearchParams(location.search);
   const setup = params.get('setup');
   if (setup) {
     const parts = setup.split(':');
     if (parts.length >= 3) {
-      const settings = {
-        user: parts[0],
-        repo: parts[1],
-        token: parts.slice(2).join(':'),
-        notifyDays: 7
-      };
-      localStorage.setItem('autostock_settings', JSON.stringify(settings));
+      localStorage.setItem('autostock_settings', JSON.stringify({ user:parts[0], repo:parts[1], token:parts.slice(2).join(':'), notifyDays:7 }));
       history.replaceState(null, '', location.pathname);
     }
   }
+  document.querySelectorAll('.food-only').forEach(el => el.style.display='none');
   const s = getSettings();
-  if (s.user && s.repo && s.token) loadItems();
+  if (s.user && s.repo && s.token) loadData();
 });
 </script>
 </body>
