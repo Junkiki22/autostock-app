@@ -38,6 +38,16 @@ body.food-mode .btn { background:#2e9d57; color:#fff; }
 body.food-mode .btn:hover { background:#26884a; }
 body.food-mode .modal-content { background:#10231a; }
 
+/* ===== Care Mode Theme (身だしなみ: 温かいアンバー系) ===== */
+body.care-mode { background:#1a1206; }
+body.care-mode .header { background:linear-gradient(135deg,#4a3410,#7a5a1b); }
+body.care-mode .card { background:#231a0d; border-left-color:#e0a020; }
+body.care-mode .card.ok { border-left-color:#e0a020; }
+body.care-mode .btn { background:#c88a1e; color:#fff; }
+body.care-mode .btn:hover { background:#b07818; }
+body.care-mode .btn.replace { background:#e0a020; color:#000; }
+body.care-mode .modal-content { background:#231a0d; }
+
 .header {
   background:linear-gradient(135deg,#1a1a3e,#2d1b69);
   padding:16px 20px;
@@ -192,6 +202,7 @@ body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
   <div class="header-btns">
     <button class="header-btn" onclick="toggleFoodMode()" title="食品モード" id="foodBtn">🍎</button>
     <button class="header-btn" onclick="togglePetMode()" title="ペットモード" id="petBtn">🐰</button>
+    <button class="header-btn" onclick="toggleCareMode()" title="身だしなみ" id="careBtn">✂️</button>
     <button class="header-btn" onclick="loadData()" title="更新">🔄</button>
     <button class="header-btn" onclick="openSettings()" title="設定">⚙️</button>
     <button class="header-btn" onclick="openAdd()" title="追加">➕</button>
@@ -259,6 +270,11 @@ body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
       <input type="checkbox" id="editPet">
       <span>🐰 ペット関連のアイテム</span>
     </div>
+    <!-- 消耗品モード: 身だしなみ -->
+    <div class="checkbox-row item-only">
+      <input type="checkbox" id="editCare">
+      <span>✂️ 身だしなみ（セルフケア）</span>
+    </div>
     <!-- 食品モード: 料理食材 -->
     <div class="checkbox-row food-only">
       <input type="checkbox" id="editIngredient">
@@ -306,6 +322,7 @@ let itemsData = [];   // 消耗品 items.json
 let foodsData = [];   // 食品 foods.json
 let _petMode = false;
 let _foodMode = false;
+let _careMode = false;
 let _fileSha = null;      // items.json sha
 let _foodSha = null;      // foods.json sha
 
@@ -342,9 +359,12 @@ function saveSettings() {
 function applyModeUI() {
   document.body.classList.toggle('food-mode', _foodMode);
   document.body.classList.toggle('pet-mode', _petMode);
+  document.body.classList.toggle('care-mode', _careMode);
   document.getElementById('foodBtn').classList.toggle('active', _foodMode);
   document.getElementById('petBtn').classList.toggle('active', _petMode);
-  document.getElementById('appTitle').textContent = _foodMode ? '🥗 AutoStock 食品' : '📦 AutoStock';
+  document.getElementById('careBtn').classList.toggle('active', _careMode);
+  document.getElementById('appTitle').textContent =
+    _foodMode ? '🥗 AutoStock 食品' : (_careMode ? '✂️ 身だしなみ' : '📦 AutoStock');
   document.getElementById('lblUrgent').textContent = _foodMode ? '期限切れ' : '要交換';
   document.getElementById('lblSoon').textContent = 'まもなく';
   document.querySelectorAll('.food-only').forEach(el => el.style.display = _foodMode ? '' : 'none');
@@ -357,7 +377,9 @@ function togglePetMode() {
   if (_foodMode) {
     _foodMode = false;
     _petMode = true;      // 食品 → ペットへ直行
+    _careMode = false;
   } else {
+    _careMode = false;    // 身だしなみ中でも通常⇔ペットへ
     _petMode = !_petMode; // 通常 ⇔ ペット
   }
   applyModeUI();
@@ -365,12 +387,27 @@ function togglePetMode() {
   else render();           // 消耗品内の切替はデータ再利用で即描画
 }
 
-// 🍎 押下: 食品モードをトグル。入るときはペットモード解除
+// 🍎 押下: 食品モードをトグル。入るときはペット/身だしなみ解除
 function toggleFoodMode() {
   _foodMode = !_foodMode;
-  if (_foodMode) _petMode = false;
+  if (_foodMode) { _petMode = false; _careMode = false; }
   applyModeUI();
   loadData(); // items.json ⇔ foods.json でデータソースが変わるので再読込
+}
+
+// ✂️ 押下: 身だしなみモードをトグル。食品からはデータ再読込、消耗品/ペットからは即描画
+function toggleCareMode() {
+  const wasFood = _foodMode;
+  if (_careMode) {
+    _careMode = false;      // 身だしなみ → 通常へ
+  } else {
+    _foodMode = false;
+    _petMode = false;
+    _careMode = true;
+  }
+  applyModeUI();
+  if (wasFood) loadData();  // 食品→消耗品系はデータソースが変わるので再読込
+  else render();            // 消耗品(items.json)内の切替は即描画
 }
 
 // ===== GitHub API =====
@@ -459,8 +496,10 @@ function renderItems() {
   const urgent=[], soon=[], ok=[], stockOnly=[], paused=[], outOfStock=[];
 
   itemsData.forEach(item => {
-    if (_petMode && !item.pet) return;
-    if (!_petMode && item.pet) return;
+    const isCare = item.kind === 'selfcare';
+    if (_careMode) { if (!isCare) return; }        // 身だしなみ: selfcareのみ
+    else if (_petMode) { if (!item.pet) return; }  // ペット: petのみ
+    else { if (item.pet || isCare) return; }       // 通常: pet/selfcareを除外
     if (item.paused) { paused.push(item); return; }
     const hasStock = item.stockTotal != null && item.stockTotal > 0;
     const stockEmpty = hasStock && (item.stockCurrent === 0 || item.stockCurrent == null);
@@ -487,7 +526,7 @@ function renderItems() {
   if (ok.length) { html += sec('✅ 正常', ok.map(i=>cardCycle(i,'ok')).join('')); }
   if (stockOnly.length) { html += sec('📦 在庫管理', stockOnly.map(cardStockOnly).join('')); }
   if (paused.length) { html += sec('⏸ 一時停止中', paused.map(cardPaused).join('')); }
-  if (!html) html = `<div class="loading">${_petMode ? '🐰 ペット関連のアイテムはありません' : 'アイテムがありません'}</div>`;
+  if (!html) html = `<div class="loading">${_careMode ? '✂️ 身だしなみのアイテムはありません' : (_petMode ? '🐰 ペット関連のアイテムはありません' : 'アイテムがありません')}</div>`;
   document.getElementById('itemList').innerHTML = html;
 }
 
@@ -640,6 +679,7 @@ function openAdd() {
   document.getElementById('editCategory').value = '生鮮';
   document.getElementById('editPaused').checked = false;
   document.getElementById('editPet').checked = _petMode; // ペットモード中の追加はペット扱い
+  document.getElementById('editCare').checked = _careMode; // 身だしなみモード中の追加はセルフケア扱い
   document.getElementById('editIngredient').checked = false;
   document.getElementById('editError').style.display='none';
   document.getElementById('deleteBtn').style.display='none';
@@ -666,6 +706,7 @@ function editItem(id) {
     document.getElementById('editCycle').value = item.cycleDays||'';
     document.getElementById('editLastReplaced').value = item.lastReplaced||'';
     document.getElementById('editPet').checked = !!item.pet;
+    document.getElementById('editCare').checked = item.kind === 'selfcare';
   }
   document.getElementById('editError').style.display='none';
   document.getElementById('deleteBtn').style.display='inline-block';
@@ -705,8 +746,9 @@ async function saveItem() {
     const cycleDays = cycleVal ? parseInt(cycleVal) : null;
     const lastReplaced = document.getElementById('editLastReplaced').value;
     const pet = document.getElementById('editPet').checked;
+    const care = document.getElementById('editCare').checked;
     if (!cycleDays && !stockTotal) { err.textContent='交換サイクルまたは在庫総数のどちらかは入力してください。'; err.style.display='block'; return; }
-    const data = { icon, name, asin, cycleDays, lastReplaced, stockTotal, stockCurrent, note, paused, pet };
+    const data = { icon, name, asin, cycleDays, lastReplaced, stockTotal, stockCurrent, note, paused, pet, kind: care ? 'selfcare' : '' };
     if (id) {
       const idx = itemsData.findIndex(i=>i.id===id);
       if (idx>=0) itemsData[idx] = { ...itemsData[idx], ...data };
