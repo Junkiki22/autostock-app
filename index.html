@@ -367,7 +367,7 @@ function applyModeUI() {
     _foodMode ? '🥗 AutoStock 食品' : (_careMode ? '✂️ 身だしなみ' : '📦 AutoStock');
   document.getElementById('lblUrgent').textContent = _foodMode ? '期限切れ' : '要交換';
   document.getElementById('lblSoon').textContent = 'まもなく';
-  document.querySelectorAll('.food-only').forEach(el => el.style.display = _foodMode ? '' : 'none');
+  document.querySelectorAll('.food-only').forEach(el => el.style.display = _foodMode ? (el.classList.contains('checkbox-row') ? 'flex' : 'block') : 'none');
   document.querySelectorAll('.item-only').forEach(el => el.style.display = _foodMode ? 'none' : '');
 }
 
