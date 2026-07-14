@@ -240,10 +240,8 @@ body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
 
     <!-- 食品モード用フィールド -->
     <div class="food-only">
-      <label>賞味期限</label>
-      <input type="date" id="editExpiry">
       <label>カテゴリ</label>
-      <select id="editCategory">
+      <select id="editCategory" onchange="onCategoryChange()">
         <option value="生鮮">生鮮</option>
         <option value="冷凍">冷凍</option>
         <option value="常温">常温</option>
@@ -251,6 +249,20 @@ body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
         <option value="飲料">飲料</option>
         <option value="菓子">菓子</option>
       </select>
+      <label>賞味期間（買った日から）※一度決めれば以降は「🛒買った」で自動更新</label>
+      <div style="display:flex;gap:8px;">
+        <input type="number" id="editShelfLife" placeholder="7" min="0" style="flex:2;">
+        <select id="editShelfUnit" style="flex:1;">
+          <option value="1">日</option>
+          <option value="7">週</option>
+          <option value="30">ヶ月</option>
+          <option value="365">年</option>
+        </select>
+      </div>
+      <label>購入日（既定=今日）</label>
+      <input type="date" id="editPurchase">
+      <label>賞味期限を直接指定する場合（※賞味期間を空にした時だけ有効）</label>
+      <input type="date" id="editExpiry">
       <label>何日前に通知（空欄=カテゴリ既定）</label>
       <input type="number" id="editNotifyDays" placeholder="3">
     </div>
@@ -327,6 +339,49 @@ let _fileSha = null;      // items.json sha
 let _foodSha = null;      // foods.json sha
 
 const CATEGORY_DEFAULT_NOTIFY = { '生鮮':3, '冷凍':14, '常温':30, '調味料':14, '飲料':14, '菓子':7 };
+// カテゴリ別「賞味期間」既定(日)。初回登録時の提案値。品目ごとに上書き可(記憶される)
+const CATEGORY_DEFAULT_SHELF = { '生鮮':7, '冷凍':30, '常温':365, '調味料':365, '飲料':180, '菓子':90 };
+
+// ===== 日付ヘルパー(賞味期間ベース) =====
+// ローカル暦日(JST)の今日。toISOStringはUTCで早朝にずれるので getFullYear系で組む
+function todayStr() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+}
+// 'YYYY-MM-DD' に日数を足す。UTCで計算しTZずれ(±1日)を防ぐ(暦日演算)
+function addDaysStr(dateStr, days) {
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m-1, d));
+  dt.setUTCDate(dt.getUTCDate() + Number(days));
+  return dt.toISOString().slice(0,10);
+}
+// shelfLifeDays(絶対日数) → {value,unit} 見やすい単位に分解(年→ヶ月→週→日)
+function daysToUnit(days) {
+  if (days == null || days === '') return { value:'', unit:1 };
+  const d = Number(days);
+  if (d % 365 === 0) return { value:d/365, unit:365 };
+  if (d % 30  === 0) return { value:d/30,  unit:30 };
+  if (d % 7   === 0) return { value:d/7,   unit:7 };
+  return { value:d, unit:1 };
+}
+// モーダルの賞味期間入力(値×単位) → shelfLifeDays。未入力は null
+function readShelfDays() {
+  const v = document.getElementById('editShelfLife').value.trim();
+  if (!v) return null;
+  const unit = parseInt(document.getElementById('editShelfUnit').value) || 1;
+  return parseInt(v) * unit;
+}
+// カテゴリ変更時: 賞味期間が空なら既定を提案(年/ヶ月/日の見やすい単位で)
+function onCategoryChange() {
+  const el = document.getElementById('editShelfLife');
+  if (el.value.trim()) return; // 既に入力済みなら触らない
+  const cat = document.getElementById('editCategory').value;
+  const def = CATEGORY_DEFAULT_SHELF[cat];
+  if (def == null) return;
+  const u = daysToUnit(def);
+  el.value = u.value;
+  document.getElementById('editShelfUnit').value = String(u.unit);
+}
 
 // ===== Settings =====
 function getSettings() {
@@ -631,6 +686,7 @@ function cardFood(f, level) {
     <span class="status-badge ${level}">${statusText}</span></div>
     <div class="meta">${f.category||''}${f.expiryDate?` · 期限 ${f.expiryDate}`:''}${f.note?` · ${f.note}`:''}</div>
     <div class="card-actions">
+      <button class="btn amazon" onclick="buyFood('${f.id}')">🛒 買った</button>
       <button class="btn replace" onclick="consumeFood('${f.id}')">✅ 食べた/使った</button>
       <button class="btn edit" onclick="editItem('${f.id}')">✏️</button>
     </div></div>`;
@@ -651,6 +707,14 @@ async function useStock(id) {
   if ((item.stockCurrent??0)<=0){ alert('在庫が0です'); return; }
   item.stockCurrent--;
   try { await saveItems(); render(); } catch(e){ alert('保存エラー: '+e.message); }
+}
+// 買った/補充: 購入日を今日にリセット→賞味期間があれば期限を今日+賞味期間で再計算。在庫は満タンに補充
+async function buyFood(id) {
+  const f = foodsData.find(x=>x.id===id); if(!f) return;
+  f.purchaseDate = todayStr();
+  if (f.shelfLifeDays != null) f.expiryDate = addDaysStr(f.purchaseDate, f.shelfLifeDays);
+  if (f.stockTotal != null) f.stockCurrent = f.stockTotal; // 買い直し=満タンに
+  try { await saveFoods(); render(); } catch(e){ alert('保存エラー: '+e.message); }
 }
 // 食品を消費: 残数を減らし、0になったら（食材なら）買い足しは同期GAS側が拾う。0在庫の食材はここで注意喚起
 async function consumeFood(id) {
@@ -676,7 +740,11 @@ function openAdd() {
   ['editIcon','editName','editAsin','editCycle','editStockTotal','editStockCurrent','editNote','editNotifyDays'].forEach(x=>document.getElementById(x).value='');
   document.getElementById('editLastReplaced').value = new Date().toISOString().slice(0,10);
   document.getElementById('editExpiry').value = '';
+  document.getElementById('editShelfLife').value = '';
+  document.getElementById('editShelfUnit').value = '1';
+  document.getElementById('editPurchase').value = todayStr();
   document.getElementById('editCategory').value = '生鮮';
+  onCategoryChange(); // 生鮮の既定賞味期間を提案
   document.getElementById('editPaused').checked = false;
   document.getElementById('editPet').checked = _petMode; // ペットモード中の追加はペット扱い
   document.getElementById('editCare').checked = _careMode; // 身だしなみモード中の追加はセルフケア扱い
@@ -697,8 +765,13 @@ function editItem(id) {
   document.getElementById('editNote').value = item.note||'';
   document.getElementById('editPaused').checked = !!item.paused;
   if (_foodMode) {
-    document.getElementById('editExpiry').value = item.expiryDate||'';
     document.getElementById('editCategory').value = item.category||'生鮮';
+    const u = daysToUnit(item.shelfLifeDays);
+    document.getElementById('editShelfLife').value = u.value;
+    document.getElementById('editShelfUnit').value = String(u.unit);
+    document.getElementById('editPurchase').value = item.purchaseDate || item.addedDate || todayStr();
+    // 賞味期間を持つ食品は期限を自動計算するので絶対日付欄は空(=賞味期間優先)
+    document.getElementById('editExpiry').value = item.shelfLifeDays ? '' : (item.expiryDate||'');
     document.getElementById('editNotifyDays').value = item.notifyDaysBefore ?? '';
     document.getElementById('editIngredient').checked = !!item.isIngredient;
   } else {
@@ -726,18 +799,26 @@ async function saveItem() {
   if (!name) { err.textContent='名前を入力してください'; err.style.display='block'; return; }
 
   if (_foodMode) {
-    const expiryDate = document.getElementById('editExpiry').value;
     const category = document.getElementById('editCategory').value;
     const ndVal = document.getElementById('editNotifyDays').value.trim();
     const notifyDaysBefore = ndVal ? parseInt(ndVal) : (CATEGORY_DEFAULT_NOTIFY[category] || 3);
     const isIngredient = document.getElementById('editIngredient').checked;
-    if (!expiryDate) { err.textContent='賞味期限を入力してください'; err.style.display='block'; return; }
-    const data = { icon, name, category, expiryDate, notifyDaysBefore, isIngredient, restockRef:'', asin:'', stockTotal, stockCurrent, note, paused };
+    const shelfLifeDays = readShelfDays();
+    const purchaseDate = document.getElementById('editPurchase').value || todayStr();
+    // 賞味期間があれば「購入日＋賞味期間」で期限を自動計算。無ければ絶対日付を使う
+    const expiryDate = (shelfLifeDays != null)
+      ? addDaysStr(purchaseDate, shelfLifeDays)
+      : document.getElementById('editExpiry').value;
+    if (shelfLifeDays == null && !expiryDate) {
+      err.textContent='賞味期間（買った日から何日/週/年）か、賞味期限のどちらかを入力してください';
+      err.style.display='block'; return;
+    }
+    const data = { icon, name, category, shelfLifeDays, purchaseDate, expiryDate, notifyDaysBefore, isIngredient, restockRef:'', asin:'', stockTotal, stockCurrent, note, paused };
     if (id) {
       const idx = foodsData.findIndex(i=>i.id===id);
       if (idx>=0) foodsData[idx] = { ...foodsData[idx], ...data };
     } else {
-      foodsData.push({ id:String(Date.now()), enabled:true, addedDate:new Date().toISOString().slice(0,10), taskId:'', ...data });
+      foodsData.push({ id:String(Date.now()), enabled:true, addedDate:todayStr(), taskId:'', ...data });
     }
     try { await saveFoods(); closeModal(); render(); } catch(e){ alert('保存エラー: '+e.message); }
   } else {
