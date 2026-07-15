@@ -420,7 +420,7 @@ function applyModeUI() {
   document.getElementById('careBtn').classList.toggle('active', _careMode);
   document.getElementById('appTitle').textContent =
     _foodMode ? '🥗 AutoStock 食品' : (_careMode ? '✂️ 身だしなみ' : '📦 AutoStock');
-  document.getElementById('lblUrgent').textContent = _foodMode ? '期限切れ' : '要交換';
+  document.getElementById('lblUrgent').textContent = _foodMode ? '要対応' : '要交換';
   document.getElementById('lblSoon').textContent = 'まもなく';
   document.querySelectorAll('.food-only').forEach(el => el.style.display = _foodMode ? (el.classList.contains('checkbox-row') ? 'flex' : 'block') : 'none');
   document.querySelectorAll('.item-only').forEach(el => el.style.display = _foodMode ? 'none' : '');
@@ -587,11 +587,13 @@ function renderItems() {
 
 // ========== 食品 render（賞味期限ベース） ==========
 function renderFoods() {
-  const expired=[], soon=[], ok=[], paused=[];
+  const expired=[], outstock=[], soon=[], ok=[], paused=[];
   foodsData.forEach(f => {
     if (f.paused) { paused.push(f); return; }
     const dLeft = daysUntil(f.expiryDate);
     f._daysLeft = dLeft;
+    // 在庫0(在庫管理してる品)は期限より優先で「要対応=買って」。持ってない物の期限は無意味
+    if (f.stockTotal != null && (f.stockCurrent ?? 0) === 0) { outstock.push(f); return; }
     const threshold = (typeof f.notifyDaysBefore === 'number')
       ? f.notifyDaysBefore : (CATEGORY_DEFAULT_NOTIFY[f.category] || 3);
     if (dLeft == null) { ok.push(f); return; }
@@ -603,15 +605,17 @@ function renderFoods() {
   soon.sort((a,b)=>a._daysLeft-b._daysLeft);
   ok.sort((a,b)=>(a._daysLeft??9999)-(b._daysLeft??9999));
 
-  document.getElementById('sumUrgent').textContent = expired.length;
+  // 赤タイル=期限切れ＋在庫切れ(=要対応)
+  document.getElementById('sumUrgent').textContent = expired.length + outstock.length;
   document.getElementById('sumSoon').textContent = soon.length;
   document.getElementById('sumOk').textContent = ok.length;
 
   let html = '';
-  if (expired.length) html += sec('⚠️ 期限切れ', expired.map(f=>cardFood(f,'urgent')).join(''));
-  if (soon.length)    html += sec('🔔 早めに消費', soon.map(f=>cardFood(f,'soon')).join(''));
-  if (ok.length)      html += sec('✅ 余裕あり', ok.map(f=>cardFood(f,'ok')).join(''));
-  if (paused.length)  html += sec('⏸ 一時停止中', paused.map(f=>cardFood(f,'ok')).join(''));
+  if (expired.length)  html += sec('⚠️ 期限切れ', expired.map(f=>cardFood(f,'urgent')).join(''));
+  if (outstock.length) html += sec('🛒 在庫切れ・買って', outstock.map(f=>cardFood(f,'urgent')).join(''));
+  if (soon.length)     html += sec('🔔 早めに消費', soon.map(f=>cardFood(f,'soon')).join(''));
+  if (ok.length)       html += sec('✅ 余裕あり', ok.map(f=>cardFood(f,'ok')).join(''));
+  if (paused.length)   html += sec('⏸ 一時停止中', paused.map(f=>cardFood(f,'ok')).join(''));
   if (!html) html = '<div class="loading">🥗 食品が登録されていません（➕ で追加）</div>';
   document.getElementById('itemList').innerHTML = html;
 }
@@ -675,7 +679,9 @@ function cardPaused(item) {
 function cardFood(f, level) {
   const d = f._daysLeft;
   let statusText;
-  if (d == null) statusText = '期限未設定';
+  const outOfStock = f.stockTotal != null && (f.stockCurrent ?? 0) === 0;
+  if (outOfStock) statusText = '在庫なし';
+  else if (d == null) statusText = '期限未設定';
   else if (d < 0) statusText = `${Math.abs(d)}日超過`;
   else if (d === 0) statusText = '今日まで';
   else statusText = `あと${d}日`;
