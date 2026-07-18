@@ -237,6 +237,8 @@ body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
       <input type="number" id="editCycle" placeholder="60">
       <label>最終交換日</label>
       <input type="date" id="editLastReplaced">
+      <label>何日前に通知（空欄=既定7日 ／ 0=当日から）</label>
+      <input type="number" id="editItemNotifyDays" placeholder="7" min="0">
     </div>
 
     <!-- 食品モード用フィールド -->
@@ -826,6 +828,7 @@ function editItem(id) {
     document.getElementById('editLastReplaced').value = item.lastReplaced||'';
     document.getElementById('editPet').checked = !!item.pet;
     document.getElementById('editCare').checked = item.kind === 'selfcare';
+    document.getElementById('editItemNotifyDays').value = item.notifyDaysBefore ?? '';
   }
   document.getElementById('editError').style.display='none';
   document.getElementById('deleteBtn').style.display='inline-block';
@@ -874,11 +877,13 @@ async function saveItem() {
     const lastReplaced = document.getElementById('editLastReplaced').value;
     const pet = document.getElementById('editPet').checked;
     const care = document.getElementById('editCare').checked;
+    const itemNdVal = document.getElementById('editItemNotifyDays').value.trim();
     if (!cycleDays && !stockTotal) { err.textContent='交換サイクルまたは在庫総数のどちらかは入力してください。'; err.style.display='block'; return; }
     const data = { icon, name, asin, cycleDays, lastReplaced, stockTotal, stockCurrent, note, paused, pet, kind: care ? 'selfcare' : '' };
+    if (itemNdVal !== '') data.notifyDaysBefore = parseInt(itemNdVal);
     if (id) {
       const idx = itemsData.findIndex(i=>String(i.id)===String(id));
-      if (idx>=0) itemsData[idx] = { ...itemsData[idx], ...data };
+      if (idx>=0) { itemsData[idx] = { ...itemsData[idx], ...data }; if (itemNdVal === '') delete itemsData[idx].notifyDaysBefore; }
     } else {
       itemsData.push({ id:nextNumericId(itemsData,200), enabled:true, ...data });
     }
