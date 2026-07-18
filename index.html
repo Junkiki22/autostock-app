@@ -203,6 +203,7 @@ body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
     <button class="header-btn" onclick="toggleFoodMode()" title="食品モード" id="foodBtn">🍎</button>
     <button class="header-btn" onclick="togglePetMode()" title="ペットモード" id="petBtn">🐰</button>
     <button class="header-btn" onclick="toggleCareMode()" title="身だしなみ" id="careBtn">✂️</button>
+    <button class="header-btn" onclick="toggleVehicleMode()" title="車両" id="vehicleBtn">🚗</button>
     <button class="header-btn" onclick="loadData()" title="更新">🔄</button>
     <button class="header-btn" onclick="openSettings()" title="設定">⚙️</button>
     <button class="header-btn" onclick="openAdd()" title="追加">➕</button>
@@ -335,6 +336,7 @@ let foodsData = [];   // 食品 foods.json
 let _petMode = false;
 let _foodMode = false;
 let _careMode = false;
+let _vehicleMode = false;  // 車両(kind:vehicle)モード
 let _fileSha = null;      // items.json sha
 let _foodSha = null;      // foods.json sha
 
@@ -415,11 +417,13 @@ function applyModeUI() {
   document.body.classList.toggle('food-mode', _foodMode);
   document.body.classList.toggle('pet-mode', _petMode);
   document.body.classList.toggle('care-mode', _careMode);
+  document.body.classList.toggle('vehicle-mode', _vehicleMode);
   document.getElementById('foodBtn').classList.toggle('active', _foodMode);
   document.getElementById('petBtn').classList.toggle('active', _petMode);
   document.getElementById('careBtn').classList.toggle('active', _careMode);
+  document.getElementById('vehicleBtn').classList.toggle('active', _vehicleMode);
   document.getElementById('appTitle').textContent =
-    _foodMode ? '🥗 AutoStock 食品' : (_careMode ? '✂️ 身だしなみ' : '📦 AutoStock');
+    _foodMode ? '🥗 AutoStock 食品' : (_careMode ? '✂️ 身だしなみ' : (_vehicleMode ? '🚗 車両' : '📦 AutoStock'));
   document.getElementById('lblUrgent').textContent = _foodMode ? '要対応' : '要交換';
   document.getElementById('lblSoon').textContent = 'まもなく';
   document.querySelectorAll('.food-only').forEach(el => el.style.display = _foodMode ? (el.classList.contains('checkbox-row') ? 'flex' : 'block') : 'none');
@@ -433,8 +437,10 @@ function togglePetMode() {
     _foodMode = false;
     _petMode = true;      // 食品 → ペットへ直行
     _careMode = false;
+    _vehicleMode = false;
   } else {
     _careMode = false;    // 身だしなみ中でも通常⇔ペットへ
+    _vehicleMode = false;
     _petMode = !_petMode; // 通常 ⇔ ペット
   }
   applyModeUI();
@@ -445,7 +451,7 @@ function togglePetMode() {
 // 🍎 押下: 食品モードをトグル。入るときはペット/身だしなみ解除
 function toggleFoodMode() {
   _foodMode = !_foodMode;
-  if (_foodMode) { _petMode = false; _careMode = false; }
+  if (_foodMode) { _petMode = false; _careMode = false; _vehicleMode = false; }
   applyModeUI();
   loadData(); // items.json ⇔ foods.json でデータソースが変わるので再読込
 }
@@ -458,11 +464,28 @@ function toggleCareMode() {
   } else {
     _foodMode = false;
     _petMode = false;
+    _vehicleMode = false;
     _careMode = true;
   }
   applyModeUI();
   if (wasFood) loadData();  // 食品→消耗品系はデータソースが変わるので再読込
   else render();            // 消耗品(items.json)内の切替は即描画
+}
+
+// 🚗 押下: 車両モードをトグル(kind:vehicleのみ表示)。食品からはデータ再読込、消耗品/ペット/身だしなみからは即描画
+function toggleVehicleMode() {
+  const wasFood = _foodMode;
+  if (_vehicleMode) {
+    _vehicleMode = false;   // 車両 → 通常へ
+  } else {
+    _foodMode = false;
+    _petMode = false;
+    _careMode = false;
+    _vehicleMode = true;
+  }
+  applyModeUI();
+  if (wasFood) loadData();
+  else render();
 }
 
 // ===== GitHub API =====
@@ -552,9 +575,11 @@ function renderItems() {
 
   itemsData.forEach(item => {
     const isCare = item.kind === 'selfcare';
+    const isVehicle = item.kind === 'vehicle';
     if (_careMode) { if (!isCare) return; }        // 身だしなみ: selfcareのみ
     else if (_petMode) { if (!item.pet) return; }  // ペット: petのみ
-    else { if (item.pet || isCare) return; }       // 通常: pet/selfcareを除外
+    else if (_vehicleMode) { if (!isVehicle) return; } // 車両: vehicleのみ
+    else { if (item.pet || isCare || isVehicle) return; } // 通常: pet/selfcare/vehicleを除外
     if (item.paused) { paused.push(item); return; }
     const hasStock = item.stockTotal != null && item.stockTotal > 0;
     const stockEmpty = hasStock && (item.stockCurrent === 0 || item.stockCurrent == null);
