@@ -589,7 +589,7 @@ function renderItems() {
     const elapsed = Math.floor((now - last) / 86400000);
     const remaining = item.cycleDays - elapsed;
     item._remaining = remaining;
-    item._progress = Math.min(elapsed / item.cycleDays, 1);
+    item._progress = Math.max(remaining / item.cycleDays, 0);
     if (remaining <= 0) urgent.push(item);
     else if (remaining <= notifyDays) soon.push(item);
     else ok.push(item);
