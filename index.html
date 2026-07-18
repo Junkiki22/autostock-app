@@ -274,6 +274,8 @@ body.pet-mode .btn.edit { background:rgba(0,0,0,0.08); color:#555; }
     <input type="number" id="editStockTotal" placeholder="3" min="0">
     <label>現在の残数（任意）</label>
     <input type="number" id="editStockCurrent" placeholder="2" min="0">
+    <label>入数（1箱=N個）※パック品のみ。空欄/1=箱管理しない</label>
+    <input type="number" id="editUnitsPerPack" placeholder="24" min="1">
     <label>メモ</label>
     <input type="text" id="editNote" placeholder="">
     <div class="checkbox-row">
@@ -649,12 +651,21 @@ function renderFoods() {
 
 // ===== helpers =====
 function sec(title, inner) { return `<div class="section"><div class="section-title">${title}</div>${inner}</div>`; }
+// 総個数(cur)・満タン(total)・入数(units)から表示ラベル。units未設定/1は従来「x/y個」
+function formatStock(cur, total, units) {
+  cur = cur ?? 0;
+  if (!units || units <= 1) return `${cur}/${total}個`;
+  const boxes = Math.floor(cur / units), rem = cur % units;
+  const head = rem === 0 ? `${boxes}箱` : `${boxes}箱＋${rem}個`;
+  return `${head}（計${cur}個）`;
+}
 function stockBadgeHtml(item) {
   if (item.stockTotal == null || item.stockTotal <= 0) return '';
   const cur = item.stockCurrent ?? 0, total = item.stockTotal;
-  let cls='', label=`${cur}/${total}個`;
+  const u = item.unitsPerPack;
+  let cls='', label=formatStock(cur, total, u);
   if (cur === 0) { cls='danger'; label=`在庫切れ 0/${total}個`; }
-  else if (cur <= 1) { cls='warning'; label=`残り${cur}/${total}個`; }
+  else if (u>1 ? cur<u : cur<=1) { cls='warning'; label=`残り${formatStock(cur,total,u)}`; }
   return `<span class="stock-badge ${cls}">${label}</span>`;
 }
 
@@ -685,12 +696,14 @@ function cardOutOfStock(item) {
 }
 function cardStockOnly(item) {
   const cur = item.stockCurrent ?? 0, total = item.stockTotal ?? 0;
-  let numClass = cur===0?'danger':(cur<=1?'warning':'ok');
+  const u = item.unitsPerPack;
+  let numClass = cur===0?'danger':((u>1 ? cur<u : cur<=1)?'warning':'ok');
   return `<div class="card stock-only"><div class="card-top">
     <span class="item-icon">${item.icon||'📦'}</span><span class="item-name">${item.name}</span></div>
-    <div class="stock-large ${numClass}">${cur} / ${total}個</div><div class="meta">${item.note||''}</div>
+    <div class="stock-large ${numClass}">${formatStock(cur, total, u)}</div><div class="meta">${item.note||''}</div>
     <div class="card-actions">
     ${item.asin?`<button class="btn amazon" onclick="openAmazon('${item.asin}')">🛒 Amazonで購入</button>`:''}
+    ${u>1?`<button class="btn amazon" onclick="buyPack('${item.id}')">🛒 買った(+1箱)</button>`:''}
     <button class="btn replace" onclick="useStock('${item.id}')">✅ 使用済み(-1)</button>
     <button class="btn edit" onclick="editItem('${item.id}')">✏️</button></div></div>`;
 }
@@ -756,12 +769,23 @@ async function useStock(id) {
   item.stockCurrent--;
   try { await saveItems(); render(); } catch(e){ alert('保存エラー: '+e.message); }
 }
+// パック品を1箱買い足し: 総個数を+入数、満タンは現残に追従
+async function buyPack(id) {
+  const item = itemsData.find(i=>String(i.id)===String(id)); if(!item) return;
+  const u = item.unitsPerPack||1;
+  item.stockCurrent = (item.stockCurrent??0) + u;
+  item.stockTotal = Math.max(item.stockTotal??0, item.stockCurrent);
+  try { await saveItems(); render(); } catch(e){ alert('保存エラー: '+e.message); }
+}
 // 買った/補充: 購入日を今日にリセット→賞味期間があれば期限を今日+賞味期間で再計算。在庫は満タンに補充
 async function buyFood(id) {
   const f = foodsData.find(x=>String(x.id)===String(id)); if(!f) return;
   f.purchaseDate = todayStr();
   if (f.shelfLifeDays != null) f.expiryDate = addDaysStr(f.purchaseDate, f.shelfLifeDays);
-  if (f.stockTotal != null) f.stockCurrent = f.stockTotal; // 買い直し=満タンに
+  if (f.stockTotal != null) {
+    if (f.unitsPerPack > 1) { f.stockCurrent = (f.stockCurrent??0) + f.unitsPerPack; f.stockTotal = Math.max(f.stockTotal, f.stockCurrent); } // パック=+1箱
+    else f.stockCurrent = f.stockTotal; // 買い直し=満タンに
+  }
   try { await saveFoods(); render(); } catch(e){ alert('保存エラー: '+e.message); }
 }
 // 食品を消費: 残数を減らし、0になったら（食材なら）買い足しは同期GAS側が拾う。0在庫の食材はここで注意喚起
@@ -785,7 +809,7 @@ async function consumeFood(id) {
 function openAdd() {
   document.getElementById('modalTitle').textContent = _foodMode ? '➕ 食品追加' : '➕ アイテム追加';
   document.getElementById('editId').value = '';
-  ['editIcon','editName','editAsin','editCycle','editStockTotal','editStockCurrent','editNote','editNotifyDays'].forEach(x=>document.getElementById(x).value='');
+  ['editIcon','editName','editAsin','editCycle','editStockTotal','editStockCurrent','editUnitsPerPack','editNote','editNotifyDays','editItemNotifyDays'].forEach(x=>document.getElementById(x).value='');
   document.getElementById('editLastReplaced').value = new Date().toISOString().slice(0,10);
   document.getElementById('editExpiry').value = '';
   document.getElementById('editShelfLife').value = '';
@@ -810,6 +834,7 @@ function editItem(id) {
   document.getElementById('editName').value = item.name||'';
   document.getElementById('editStockTotal').value = item.stockTotal ?? '';
   document.getElementById('editStockCurrent').value = item.stockCurrent ?? '';
+  document.getElementById('editUnitsPerPack').value = item.unitsPerPack ?? '';
   document.getElementById('editNote').value = item.note||'';
   document.getElementById('editPaused').checked = !!item.paused;
   if (_foodMode) {
@@ -842,6 +867,8 @@ async function saveItem() {
   const stockTotal = stockTotalVal ? parseInt(stockTotalVal) : null;
   const stockCurrentVal = document.getElementById('editStockCurrent').value.trim();
   const stockCurrent = stockCurrentVal ? parseInt(stockCurrentVal) : null;
+  const upVal = document.getElementById('editUnitsPerPack').value.trim();
+  const unitsPerPack = (upVal && parseInt(upVal) > 1) ? parseInt(upVal) : null;
   const note = document.getElementById('editNote').value.trim();
   const paused = document.getElementById('editPaused').checked;
   const err = document.getElementById('editError');
@@ -863,9 +890,10 @@ async function saveItem() {
       err.style.display='block'; return;
     }
     const data = { icon, name, category, shelfLifeDays, purchaseDate, expiryDate, notifyDaysBefore, isIngredient, restockRef:'', asin:'', stockTotal, stockCurrent, note, paused };
+    if (unitsPerPack) data.unitsPerPack = unitsPerPack;
     if (id) {
       const idx = foodsData.findIndex(i=>String(i.id)===String(id));
-      if (idx>=0) foodsData[idx] = { ...foodsData[idx], ...data };
+      if (idx>=0) { foodsData[idx] = { ...foodsData[idx], ...data }; if (!unitsPerPack) delete foodsData[idx].unitsPerPack; }
     } else {
       foodsData.push({ id:nextNumericId(foodsData,210), enabled:true, addedDate:todayStr(), taskId:'', ...data });
     }
@@ -881,9 +909,10 @@ async function saveItem() {
     if (!cycleDays && !stockTotal) { err.textContent='交換サイクルまたは在庫総数のどちらかは入力してください。'; err.style.display='block'; return; }
     const data = { icon, name, asin, cycleDays, lastReplaced, stockTotal, stockCurrent, note, paused, pet, kind: care ? 'selfcare' : '' };
     if (itemNdVal !== '') data.notifyDaysBefore = parseInt(itemNdVal);
+    if (unitsPerPack) data.unitsPerPack = unitsPerPack;
     if (id) {
       const idx = itemsData.findIndex(i=>String(i.id)===String(id));
-      if (idx>=0) { itemsData[idx] = { ...itemsData[idx], ...data }; if (itemNdVal === '') delete itemsData[idx].notifyDaysBefore; }
+      if (idx>=0) { itemsData[idx] = { ...itemsData[idx], ...data }; if (itemNdVal === '') delete itemsData[idx].notifyDaysBefore; if (!unitsPerPack) delete itemsData[idx].unitsPerPack; }
     } else {
       itemsData.push({ id:nextNumericId(itemsData,200), enabled:true, ...data });
     }
