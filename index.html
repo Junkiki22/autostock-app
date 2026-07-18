@@ -698,25 +698,40 @@ function cardFood(f, level) {
     </div></div>`;
 }
 
+// ===== ID採番（有意数値ID: 台帳コード*100000+連番。items=200 / foods=210）=====
+// 旧タイムスタンプidと新数値idが混在しても、該当コードブロックの最大連番+1を返す。
+function nextNumericId(arr, code) {
+  const base = code * 100000;
+  let maxSeq = 0;
+  for (const it of arr) {
+    const n = Number(it && it.id);
+    if (Number.isInteger(n) && n > base && n <= base + 99999) {
+      const seq = n - base;
+      if (seq > maxSeq) maxSeq = seq;
+    }
+  }
+  return base + maxSeq + 1;
+}
+
 // ===== Actions =====
 function openAmazon(asin) { window.open(`https://www.amazon.co.jp/dp/${asin}/?tag=autostock-22`, '_blank'); }
 
 async function markReplaced(id) {
   if (!confirm('交換済みにしますか？')) return;
-  const item = itemsData.find(i=>i.id===id); if(!item) return;
+  const item = itemsData.find(i=>String(i.id)===String(id)); if(!item) return;
   item.lastReplaced = new Date().toISOString().slice(0,10);
   if (item.stockTotal!=null && item.stockCurrent!=null && item.stockCurrent>0) item.stockCurrent--;
   try { await saveItems(); render(); } catch(e){ alert('保存エラー: '+e.message); }
 }
 async function useStock(id) {
-  const item = itemsData.find(i=>i.id===id); if(!item) return;
+  const item = itemsData.find(i=>String(i.id)===String(id)); if(!item) return;
   if ((item.stockCurrent??0)<=0){ alert('在庫が0です'); return; }
   item.stockCurrent--;
   try { await saveItems(); render(); } catch(e){ alert('保存エラー: '+e.message); }
 }
 // 買った/補充: 購入日を今日にリセット→賞味期間があれば期限を今日+賞味期間で再計算。在庫は満タンに補充
 async function buyFood(id) {
-  const f = foodsData.find(x=>x.id===id); if(!f) return;
+  const f = foodsData.find(x=>String(x.id)===String(id)); if(!f) return;
   f.purchaseDate = todayStr();
   if (f.shelfLifeDays != null) f.expiryDate = addDaysStr(f.purchaseDate, f.shelfLifeDays);
   if (f.stockTotal != null) f.stockCurrent = f.stockTotal; // 買い直し=満タンに
@@ -724,16 +739,16 @@ async function buyFood(id) {
 }
 // 食品を消費: 残数を減らし、0になったら（食材なら）買い足しは同期GAS側が拾う。0在庫の食材はここで注意喚起
 async function consumeFood(id) {
-  const f = foodsData.find(x=>x.id===id); if(!f) return;
+  const f = foodsData.find(x=>String(x.id)===String(id)); if(!f) return;
   if (f.stockTotal!=null && f.stockCurrent!=null && f.stockCurrent>0) {
     f.stockCurrent--;
   } else {
     if (!confirm('この食品を消費（リストから削除）しますか？')) return;
-    foodsData = foodsData.filter(x=>x.id!==id);
+    foodsData = foodsData.filter(x=>String(x.id)!==String(id));
   }
   try {
     await saveFoods(); render();
-    if (f.isIngredient && (f.stockCurrent===0 || !foodsData.find(x=>x.id===id))) {
+    if (f.isIngredient && (f.stockCurrent===0 || !foodsData.find(x=>String(x.id)===String(id)))) {
       alert('🛒 料理食材の使い切りとして、次回同期で買い足しリストに追加されます');
     }
   } catch(e){ alert('保存エラー: '+e.message); }
@@ -761,7 +776,7 @@ function openAdd() {
 }
 function editItem(id) {
   const src = _foodMode ? foodsData : itemsData;
-  const item = src.find(i=>i.id===id); if(!item) return;
+  const item = src.find(i=>String(i.id)===String(id)); if(!item) return;
   document.getElementById('modalTitle').textContent = _foodMode ? '✏️ 食品編集' : '✏️ アイテム編集';
   document.getElementById('editId').value = item.id;
   document.getElementById('editIcon').value = item.icon||'';
@@ -821,10 +836,10 @@ async function saveItem() {
     }
     const data = { icon, name, category, shelfLifeDays, purchaseDate, expiryDate, notifyDaysBefore, isIngredient, restockRef:'', asin:'', stockTotal, stockCurrent, note, paused };
     if (id) {
-      const idx = foodsData.findIndex(i=>i.id===id);
+      const idx = foodsData.findIndex(i=>String(i.id)===String(id));
       if (idx>=0) foodsData[idx] = { ...foodsData[idx], ...data };
     } else {
-      foodsData.push({ id:String(Date.now()), enabled:true, addedDate:todayStr(), taskId:'', ...data });
+      foodsData.push({ id:nextNumericId(foodsData,210), enabled:true, addedDate:todayStr(), taskId:'', ...data });
     }
     try { await saveFoods(); closeModal(); render(); } catch(e){ alert('保存エラー: '+e.message); }
   } else {
@@ -837,10 +852,10 @@ async function saveItem() {
     if (!cycleDays && !stockTotal) { err.textContent='交換サイクルまたは在庫総数のどちらかは入力してください。'; err.style.display='block'; return; }
     const data = { icon, name, asin, cycleDays, lastReplaced, stockTotal, stockCurrent, note, paused, pet, kind: care ? 'selfcare' : '' };
     if (id) {
-      const idx = itemsData.findIndex(i=>i.id===id);
+      const idx = itemsData.findIndex(i=>String(i.id)===String(id));
       if (idx>=0) itemsData[idx] = { ...itemsData[idx], ...data };
     } else {
-      itemsData.push({ id:String(Date.now()), enabled:true, ...data });
+      itemsData.push({ id:nextNumericId(itemsData,200), enabled:true, ...data });
     }
     try { await saveItems(); closeModal(); render(); } catch(e){ alert('保存エラー: '+e.message); }
   }
@@ -848,8 +863,8 @@ async function saveItem() {
 async function deleteItem() {
   const id = document.getElementById('editId').value; if(!id) return;
   if (!confirm('本当に削除しますか？')) return;
-  if (_foodMode) { foodsData = foodsData.filter(i=>i.id!==id); try{ await saveFoods(); }catch(e){ alert('削除エラー: '+e.message); return;} }
-  else { itemsData = itemsData.filter(i=>i.id!==id); try{ await saveItems(); }catch(e){ alert('削除エラー: '+e.message); return;} }
+  if (_foodMode) { foodsData = foodsData.filter(i=>String(i.id)!==String(id)); try{ await saveFoods(); }catch(e){ alert('削除エラー: '+e.message); return;} }
+  else { itemsData = itemsData.filter(i=>String(i.id)!==String(id)); try{ await saveItems(); }catch(e){ alert('削除エラー: '+e.message); return;} }
   closeModal(); render();
 }
 function closeModal() { document.getElementById('editModal').classList.remove('show'); }
