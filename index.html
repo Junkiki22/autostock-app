@@ -656,6 +656,7 @@ function formatStock(cur, total, units) {
   cur = cur ?? 0;
   if (!units || units <= 1) return `${cur}/${total}個`;
   const boxes = Math.floor(cur / units), rem = cur % units;
+  if (boxes === 0) return `${rem}個`;
   const head = rem === 0 ? `${boxes}箱` : `${boxes}箱＋${rem}個`;
   return `${head}（計${cur}個）`;
 }
